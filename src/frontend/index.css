@@ -1,0 +1,217 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== FONTS ===== */
+@font-face {
+  font-family: "Playfair Display";
+  src: url("/assets/fonts/PlayfairDisplay[wght].woff2") format("woff2");
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Playfair Display";
+  src: url("/assets/fonts/PlayfairDisplay-Italic[wght].woff2") format("woff2");
+  font-weight: 400 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Instrument Serif";
+  src: url("/assets/fonts/InstrumentSerif-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Instrument Serif";
+  src: url("/assets/fonts/InstrumentSerif-Italic.woff2") format("woff2");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "General Sans";
+  src: url("/assets/fonts/GeneralSans-Variable.woff2") format("woff2");
+  font-weight: 200 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "General Sans";
+  src: url("/assets/fonts/GeneralSans-VariableItalic.woff2") format("woff2");
+  font-weight: 200 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* ===== DESIGN TOKENS — Divine Collection (Luxury Indian Bridal/Ethnic Wear) ===== */
+/*
+  Palette:
+  - Deep Gold (#C9A84C) → oklch(0.74 0.12 76)
+  - Magenta/Rose        → oklch(0.55 0.22 350)
+  - Ivory/Cream         → oklch(0.97 0.02 85)
+  - Deep Charcoal       → oklch(0.18 0.01 60)
+  - Warm Blush          → oklch(0.93 0.04 45)
+  - Rich Crimson Accent → oklch(0.50 0.20 25)
+*/
+
+@layer base {
+  :root {
+    --radius: 0.5rem;
+
+    /* Core palette */
+    --background: 0.97 0.02 85;         /* ivory cream */
+    --foreground: 0.18 0.01 60;         /* deep charcoal */
+    --card: 0.99 0.01 80;               /* near white with warm tint */
+    --card-foreground: 0.18 0.01 60;
+    --popover: 0.99 0.01 80;
+    --popover-foreground: 0.18 0.01 60;
+
+    /* Gold as primary */
+    --primary: 0.68 0.13 76;            /* deep gold */
+    --primary-foreground: 0.99 0.01 80; /* ivory on gold */
+
+    /* Blush secondary */
+    --secondary: 0.93 0.04 45;          /* warm blush */
+    --secondary-foreground: 0.18 0.01 60;
+
+    /* Muted */
+    --muted: 0.92 0.03 60;
+    --muted-foreground: 0.52 0.04 60;
+
+    /* Magenta accent */
+    --accent: 0.55 0.22 350;            /* magenta/rose */
+    --accent-foreground: 0.99 0.01 80;
+
+    /* Destructive */
+    --destructive: 0.50 0.20 25;
+    --destructive-foreground: 0.99 0.01 80;
+
+    /* Borders & Inputs */
+    --border: 0.88 0.04 70;
+    --input: 0.88 0.04 70;
+    --ring: 0.68 0.13 76;
+
+    /* Charts */
+    --chart-1: 0.68 0.13 76;
+    --chart-2: 0.55 0.22 350;
+    --chart-3: 0.50 0.20 25;
+    --chart-4: 0.65 0.16 55;
+    --chart-5: 0.74 0.10 90;
+
+    /* Sidebar */
+    --sidebar: 0.99 0.01 80;
+    --sidebar-foreground: 0.18 0.01 60;
+    --sidebar-primary: 0.68 0.13 76;
+    --sidebar-primary-foreground: 0.99 0.01 80;
+    --sidebar-accent: 0.93 0.04 45;
+    --sidebar-accent-foreground: 0.18 0.01 60;
+    --sidebar-border: 0.88 0.04 70;
+    --sidebar-ring: 0.68 0.13 76;
+
+    /* Brand extras */
+    --gold: 0.68 0.13 76;
+    --gold-light: 0.84 0.10 76;
+    --gold-dark: 0.50 0.14 76;
+    --magenta: 0.55 0.22 350;
+    --crimson: 0.50 0.20 25;
+    --ivory: 0.97 0.02 85;
+    --charcoal: 0.18 0.01 60;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: "General Sans", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* ===== UTILITIES ===== */
+@layer utilities {
+  .font-display {
+    font-family: "Playfair Display", serif;
+  }
+
+  .font-serif-alt {
+    font-family: "Instrument Serif", serif;
+  }
+
+  .gold-gradient {
+    background: linear-gradient(
+      135deg,
+      oklch(0.74 0.12 76),
+      oklch(0.84 0.10 80),
+      oklch(0.68 0.14 68)
+    );
+  }
+
+  .gold-text {
+    background: linear-gradient(135deg, oklch(0.68 0.13 76), oklch(0.84 0.10 80));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-overlay {
+    background: linear-gradient(
+      135deg,
+      oklch(0.10 0.03 30 / 0.82) 0%,
+      oklch(0.15 0.04 50 / 0.70) 40%,
+      oklch(0.20 0.06 70 / 0.50) 100%
+    );
+  }
+
+  .card-hover {
+    @apply transition-all duration-300 ease-out;
+  }
+
+  .card-hover:hover {
+    @apply shadow-2xl -translate-y-1;
+  }
+
+  .img-zoom {
+    @apply overflow-hidden;
+  }
+
+  .img-zoom img {
+    @apply transition-transform duration-500 ease-out;
+  }
+
+  .img-zoom:hover img {
+    @apply scale-105;
+  }
+
+  .section-divider {
+    background: linear-gradient(90deg, transparent, oklch(0.68 0.13 76), transparent);
+    height: 1px;
+    width: 100%;
+  }
+
+  /* Decorative gold ornament line */
+  .ornament::before,
+  .ornament::after {
+    content: "";
+    display: inline-block;
+    width: 3rem;
+    height: 1px;
+    background: oklch(0.68 0.13 76);
+    vertical-align: middle;
+    margin: 0 0.75rem;
+  }
+}
