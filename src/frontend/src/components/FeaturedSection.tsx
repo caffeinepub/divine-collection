@@ -13,30 +13,30 @@ import { ProductCard } from "./ProductCard";
 const FALLBACK_FEATURED: Product[] = [
   {
     id: BigInt(21),
-    name: "Grey Embroidered Kurti Set",
+    name: "Kurti Set 1",
     description:
-      "Elegant grey cotton kurti set with white embroidery detailing on the neckline and sleeves.",
+      "A beautifully crafted Indian kurti set, perfect for casual and festive occasions.",
     isFeatured: true,
     category: Category.Sarees,
     price: BigInt(0),
   },
   {
     id: BigInt(4),
-    name: "Blue Floral Coord Set",
+    name: "Coord Set",
     description:
-      "Stunning teal blue coord set with bold white floral print, featuring a button-front kurta and matching straight pants.",
+      "A stunning coordinated top-and-bottom set blending traditional craftsmanship with a contemporary silhouette.",
     isFeatured: true,
     category: Category.CoordSets,
     price: BigInt(0),
   },
   {
     id: BigInt(7),
-    name: "White Embroidered Suit",
+    name: "Suite Set 1",
     description:
-      "Elegant off-white silk suit with subtle gold embroidery on neckline and hem, complete with matching dupatta.",
+      "A classic Indian suit set with intricate detailing, complete with matching dupatta — perfect for all occasions.",
     isFeatured: true,
     category: Category.Kurties,
-    price: BigInt(2200),
+    price: BigInt(0),
   },
 ];
 

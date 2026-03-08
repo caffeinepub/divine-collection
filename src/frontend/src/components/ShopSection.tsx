@@ -17,113 +17,116 @@ const tabs: { value: FilterTab; label: string }[] = [
 
 // Fallback products
 const FALLBACK_PRODUCTS: Product[] = [
+  // ── Kurti Sets ──────────────────────────────────────────────────────────────
   {
     id: BigInt(21),
-    name: "Grey Embroidered Kurti Set",
+    name: "Kurti Set 1",
     description:
-      "Elegant grey cotton kurti set with white embroidery detailing on the neckline and sleeves.",
+      "A beautifully crafted Indian kurti set, perfect for casual and festive occasions.",
     isFeatured: true,
     category: Category.Sarees,
     price: BigInt(0),
   },
   {
     id: BigInt(22),
-    name: "Peach Striped Kurti Set",
+    name: "Kurti Set 2",
     description:
-      "Soft peach kurti set with delicate self-stripe pattern and button placket detailing.",
+      "An elegant kurti set featuring traditional Indian prints and comfortable everyday styling.",
     isFeatured: false,
     category: Category.Sarees,
     price: BigInt(0),
   },
   {
     id: BigInt(23),
-    name: "Mint Ikat Kurti Set",
+    name: "Kurti Set 3",
     description:
-      "Fresh mint green kurti set featuring traditional ikat print with coordinated straight pants.",
+      "A vibrant kurti set with coordinated bottoms, ideal for both casual wear and light festivities.",
     isFeatured: false,
     category: Category.Sarees,
     price: BigInt(0),
   },
+  // ── Coord Sets ──────────────────────────────────────────────────────────────
   {
     id: BigInt(4),
-    name: "Blue Floral Coord Set",
+    name: "Coord Set",
     description:
-      "Stunning teal blue coord set with bold white floral print, featuring a button-front kurta and matching straight pants.",
+      "A stunning coordinated top-and-bottom set blending traditional craftsmanship with a contemporary silhouette.",
     isFeatured: true,
     category: Category.CoordSets,
     price: BigInt(0),
   },
+  // ── Suite Sets ──────────────────────────────────────────────────────────────
   {
     id: BigInt(7),
-    name: "White Embroidered Suit",
+    name: "Suite Set 1",
     description:
-      "Elegant off-white silk suit with subtle gold embroidery on neckline and hem, complete with matching dupatta.",
+      "A classic Indian suit set with intricate detailing, complete with matching dupatta — perfect for all occasions.",
     isFeatured: true,
     category: Category.Kurties,
-    price: BigInt(2200),
+    price: BigInt(0),
   },
   {
     id: BigInt(8),
-    name: "Magenta Floral Suit",
+    name: "Suite Set 2",
     description:
-      "Vibrant magenta cotton suit featuring bold white floral prints with a matching printed dupatta.",
+      "A vibrant and stylish Indian suit set with bold prints and a matching dupatta.",
     isFeatured: false,
     category: Category.Kurties,
-    price: BigInt(1800),
+    price: BigInt(0),
   },
   {
     id: BigInt(9),
-    name: "Purple Floral Suit",
+    name: "Suite Set 3",
     description:
-      "Graceful dusty purple suit with delicate white floral motifs and embroidered neckline details.",
+      "An elegantly designed suit set with traditional embellishments and a graceful silhouette.",
     isFeatured: false,
     category: Category.Kurties,
-    price: BigInt(1500),
+    price: BigInt(0),
   },
   {
     id: BigInt(16),
-    name: "Mustard Bandhani Suit",
+    name: "Suite Set 4",
     description:
-      "Cheerful mustard yellow suit with traditional bandhani circular print pattern and tie-neck detail.",
+      "A beautifully crafted suit set featuring traditional Indian textile artistry and vibrant hues.",
     isFeatured: false,
     category: Category.Kurties,
-    price: BigInt(2800),
+    price: BigInt(0),
   },
   {
     id: BigInt(17),
-    name: "Olive Geometric Suit",
+    name: "Suite Set 5",
     description:
-      "Earthy olive green suit with striking geometric block print patterns and coordinated dupatta.",
+      "A rich and festive suit set with artistic prints and coordinated dupatta, ideal for celebrations.",
     isFeatured: false,
     category: Category.Kurties,
-    price: BigInt(1900),
+    price: BigInt(0),
   },
   {
     id: BigInt(18),
-    name: "Rust Mandala Suit",
+    name: "Suite Set 6",
     description:
-      "Warm rust brown bandhani suit with large mandala motif prints — a festive essential.",
+      "A stunning suit set adorned with traditional Indian motifs, crafted for both everyday and festive wear.",
     isFeatured: true,
     category: Category.Kurties,
-    price: BigInt(2500),
+    price: BigInt(0),
   },
   {
     id: BigInt(19),
-    name: "Rust Bandhani Suit",
+    name: "Suite Set 7",
     description:
-      "Rich rust bandhani suit with classic circular motifs and delicate mirror work on the dupatta.",
+      "An artisan-crafted suit set with delicate detailing and a flowing dupatta for an effortless ethnic look.",
     isFeatured: false,
     category: Category.Kurties,
-    price: BigInt(2300),
+    price: BigInt(0),
   },
   {
     id: BigInt(20),
-    name: "Magenta Chikankari Suit",
+    name: "Suite Set 8",
     description:
-      "Bright magenta suit with chikankari embroidery on the yoke and a bold floral printed dupatta.",
+      "A beautifully embellished suit set with traditional charm and modern comfort — a wardrobe essential.",
     isFeatured: false,
     category: Category.Kurties,
-    price: BigInt(2100),
+    price: BigInt(0),
   },
 ];
 

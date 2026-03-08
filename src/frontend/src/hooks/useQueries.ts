@@ -77,57 +77,60 @@ export function useInitBackend() {
 }
 
 /**
- * Maps a product to its image path based on category + sorted index
+ * Maps a product to its image path based on product ID.
+ * Each ID is pinned to a specific uploaded image so no two products share
+ * the same photo and every image is shown regardless of context.
+ *
+ * Static literals are required so the build prune script keeps the files.
  */
-// Static image maps — filenames must appear as literals so the build prune
-// script can detect them in compiled JS and does not delete the files.
-// Category.Sarees is repurposed as "Kurti Sets"
-const KURTI_SET_IMAGES: Record<number, string> = {
-  1: "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-1.jpeg",
-  2: "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.45-PM-2--2.jpeg",
-  3: "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.45-PM-3--3.jpeg",
+
+// Suite Sets (Category.Kurties) — 8 uploaded photos, one per product ID
+const SUIT_IMAGE_BY_ID: Record<string, string> = {
+  "7": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-1--1.jpeg",
+  "8": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.48-PM-2.jpeg",
+  "9": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.47-PM-1--3.jpeg",
+  "16": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.47-PM-4.jpeg",
+  "17": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-2--5.jpeg",
+  "18": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.47-PM-3--6.jpeg",
+  "19": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.47-PM-2--7.jpeg",
+  "20": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.51-PM-8.jpeg",
 };
-const COORD_SET_IMAGES: Record<number, string> = {
-  1: "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.45-PM-1--1.jpeg",
+
+// Kurti Sets (Category.Sarees repurposed) — 3 uploaded photos
+const KURTI_IMAGE_BY_ID: Record<string, string> = {
+  "21": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-1.jpeg",
+  "22": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.45-PM-2--2.jpeg",
+  "23": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.45-PM-3--3.jpeg",
 };
-const SUIT_IMAGES: Record<number, string> = {
-  1: "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-1--1.jpeg",
-  2: "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.48-PM-2.jpeg",
-  3: "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.47-PM-1--3.jpeg",
-  4: "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.47-PM-4.jpeg",
-  5: "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-2--5.jpeg",
-  6: "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.47-PM-3--6.jpeg",
-  7: "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.47-PM-2--7.jpeg",
-  8: "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.51-PM-8.jpeg",
+
+// Coord Sets (Category.CoordSets) — 1 uploaded photo
+const COORD_IMAGE_BY_ID: Record<string, string> = {
+  "4": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.45-PM-1--1.jpeg",
 };
 
 export function getProductImage(
   product: Product,
-  allProductsInCategory: Product[],
+  _allProductsInCategory: Product[],
 ): string {
-  const sorted = [...allProductsInCategory].sort((a, b) =>
-    a.id < b.id ? -1 : a.id > b.id ? 1 : 0,
-  );
-  const idx = sorted.findIndex((p) => p.id === product.id);
-
+  const key = product.id.toString();
   switch (product.category) {
-    case Category.Sarees: {
-      // Repurposed as Kurti Sets
-      const position = (idx % 3) + 1;
-      return KURTI_SET_IMAGES[position] ?? KURTI_SET_IMAGES[1];
-    }
-    case Category.CoordSets: {
-      const position = (idx % 1) + 1;
-      return COORD_SET_IMAGES[position] ?? COORD_SET_IMAGES[1];
-    }
-    case Category.Kurties: {
-      const position = (idx % 8) + 1;
-      return SUIT_IMAGES[position] ?? SUIT_IMAGES[1];
-    }
-    default: {
-      const position = (idx % 3) + 1;
-      return KURTI_SET_IMAGES[position] ?? KURTI_SET_IMAGES[1];
-    }
+    case Category.Kurties:
+      return (
+        SUIT_IMAGE_BY_ID[key] ??
+        "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-1--1.jpeg"
+      );
+    case Category.Sarees:
+      return (
+        KURTI_IMAGE_BY_ID[key] ??
+        "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-1.jpeg"
+      );
+    case Category.CoordSets:
+      return (
+        COORD_IMAGE_BY_ID[key] ??
+        "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.45-PM-1--1.jpeg"
+      );
+    default:
+      return "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-1--1.jpeg";
   }
 }
 
