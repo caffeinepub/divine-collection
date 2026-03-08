@@ -110,24 +110,6 @@ const FALLBACK_PRODUCTS: Product[] = [
     category: Category.Kurties,
     price: BigInt(0),
   },
-  {
-    id: BigInt(19),
-    name: "Suite Set 7",
-    description:
-      "An artisan-crafted suit set with delicate detailing and a flowing dupatta for an effortless ethnic look.",
-    isFeatured: false,
-    category: Category.Kurties,
-    price: BigInt(0),
-  },
-  {
-    id: BigInt(20),
-    name: "Suite Set 8",
-    description:
-      "A beautifully embellished suit set with traditional charm and modern comfort — a wardrobe essential.",
-    isFeatured: false,
-    category: Category.Kurties,
-    price: BigInt(0),
-  },
 ];
 
 export function ShopSection() {
