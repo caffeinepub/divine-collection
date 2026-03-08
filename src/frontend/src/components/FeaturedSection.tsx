@@ -31,7 +31,7 @@ const FALLBACK_FEATURED: Product[] = [
   },
   {
     id: BigInt(7),
-    name: "Suite Set 1",
+    name: "Suit Set 1",
     description:
       "A classic Indian suit set with intricate detailing, complete with matching dupatta — perfect for all occasions.",
     isFeatured: true,

@@ -10,7 +10,7 @@ type FilterTab = "All" | Category;
 
 const tabs: { value: FilterTab; label: string }[] = [
   { value: "All", label: "All Collections" },
-  { value: Category.Kurties, label: "Suite Sets" },
+  { value: Category.Kurties, label: "Suit Sets" },
   { value: Category.Sarees, label: "Kurti Sets" },
   { value: Category.CoordSets, label: "Coord Sets" },
 ];
@@ -58,7 +58,7 @@ const FALLBACK_PRODUCTS: Product[] = [
   // ── Suite Sets ──────────────────────────────────────────────────────────────
   {
     id: BigInt(7),
-    name: "Suite Set 1",
+    name: "Suit Set 1",
     description:
       "A classic Indian suit set with intricate detailing, complete with matching dupatta — perfect for all occasions.",
     isFeatured: true,
@@ -67,7 +67,7 @@ const FALLBACK_PRODUCTS: Product[] = [
   },
   {
     id: BigInt(8),
-    name: "Suite Set 2",
+    name: "Suit Set 2",
     description:
       "A vibrant and stylish Indian suit set with bold prints and a matching dupatta.",
     isFeatured: false,
@@ -76,7 +76,7 @@ const FALLBACK_PRODUCTS: Product[] = [
   },
   {
     id: BigInt(9),
-    name: "Suite Set 3",
+    name: "Suit Set 3",
     description:
       "An elegantly designed suit set with traditional embellishments and a graceful silhouette.",
     isFeatured: false,
@@ -85,7 +85,7 @@ const FALLBACK_PRODUCTS: Product[] = [
   },
   {
     id: BigInt(16),
-    name: "Suite Set 4",
+    name: "Suit Set 4",
     description:
       "A beautifully crafted suit set featuring traditional Indian textile artistry and vibrant hues.",
     isFeatured: false,
@@ -94,7 +94,7 @@ const FALLBACK_PRODUCTS: Product[] = [
   },
   {
     id: BigInt(17),
-    name: "Suite Set 5",
+    name: "Suit Set 5",
     description:
       "A rich and festive suit set with artistic prints and coordinated dupatta, ideal for celebrations.",
     isFeatured: false,
@@ -103,7 +103,7 @@ const FALLBACK_PRODUCTS: Product[] = [
   },
   {
     id: BigInt(18),
-    name: "Suite Set 6",
+    name: "Suit Set 6",
     description:
       "A stunning suit set adorned with traditional Indian motifs, crafted for both everyday and festive wear.",
     isFeatured: true,
@@ -151,7 +151,7 @@ export function ShopSection() {
           </h2>
           <div className="section-divider max-w-xs mx-auto mt-4" />
           <p className="text-muted-foreground mt-4 text-base max-w-xl mx-auto">
-            From elegant suite sets to kurti sets and festive coord sets — find
+            From elegant suit sets to kurti sets and festive coord sets — find
             your perfect piece.
           </p>
         </motion.div>

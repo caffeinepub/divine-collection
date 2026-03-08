@@ -20,7 +20,7 @@ const categoryColors: Record<Category, string> = {
 };
 
 const categoryLabels: Record<Category, string> = {
-  [Category.Sarees]: "Saree",
+  [Category.Sarees]: "Kurti Set",
   [Category.CoordSets]: "Coord Set",
   [Category.Kurties]: "Suit",
 };

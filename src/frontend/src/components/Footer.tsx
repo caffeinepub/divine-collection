@@ -7,9 +7,9 @@ interface FooterProps {
 
 const categoryLinks = [
   { label: "All Collections", section: "shop" },
-  { label: "Sarees", section: "shop" },
+  { label: "Suit Sets", section: "shop" },
+  { label: "Kurti Sets", section: "shop" },
   { label: "Coord Sets", section: "shop" },
-  { label: "Kurties", section: "shop" },
 ];
 
 const quickLinks = [
@@ -39,8 +39,8 @@ export function Footer({ onNavigate }: FooterProps) {
             />
             <p className="text-white/60 text-sm leading-relaxed max-w-xs">
               Celebrating India's rich textile heritage through authentic
-              handcrafted sarees, coord sets, and kurties — draped in tradition,
-              styled for today.
+              handcrafted suit sets, coord sets, and kurti sets — draped in
+              tradition, styled for today.
             </p>
             {/* Social Links */}
             <div className="flex gap-3 pt-2">

@@ -9,7 +9,10 @@ import QRCode from "react-qr-code";
 import { toast } from "sonner";
 import { useSubmitContactMessage } from "../hooks/useQueries";
 
+// Use the current origin so it always reflects the deployed URL
 const SITE_URL = window.location.origin;
+// Unique key so QR code remounts fresh after each deploy
+const QR_KEY = "divine-collection-qr-v3";
 
 interface FormState {
   name: string;
@@ -341,19 +344,20 @@ export function ContactSection() {
                       Scan to visit Divine Collection on any device
                     </p>
                     <div
-                      className="bg-white p-3 inline-block rounded-sm shadow-md"
+                      key={QR_KEY}
+                      className="bg-white p-3 inline-block rounded-sm shadow-md border border-border"
                       data-ocid="contact.qr_code"
                     >
                       <QRCode
                         value={SITE_URL}
-                        size={140}
+                        size={150}
                         fgColor="#1a1a1a"
                         bgColor="#ffffff"
-                        level="M"
+                        level="H"
                       />
                     </div>
                     <p className="text-muted-foreground text-xs mt-2 break-all max-w-[180px]">
-                      {SITE_URL}
+                      Divine Collection
                     </p>
                   </div>
                 </div>

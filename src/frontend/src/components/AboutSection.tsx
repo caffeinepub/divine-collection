@@ -66,10 +66,9 @@ export function AboutSection() {
               </p>
               <p>
                 Our collection spans the full spectrum of Indian ethnic fashion
-                — from opulent Banarasi silk sarees fit for the grandest
-                celebrations, to elegant coord sets and kurties for the modern
-                Indian woman who carries her heritage with pride in everyday
-                life.
+                — from elegant suit sets and coord sets to vibrant kurti sets
+                for the modern Indian woman who carries her heritage with pride
+                in everyday life.
               </p>
             </div>
 
@@ -103,8 +102,8 @@ export function AboutSection() {
             {/* Decorative image collage */}
             <div className="relative h-64 lg:h-80 rounded-sm overflow-hidden">
               <img
-                src="/assets/generated/saree-3.dim_600x800.jpg"
-                alt="Red bridal saree"
+                src="/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-1.jpeg"
+                alt="Kurti Set"
                 className="absolute inset-0 w-full h-full object-cover object-top"
                 loading="lazy"
               />

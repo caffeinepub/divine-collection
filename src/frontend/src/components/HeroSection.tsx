@@ -85,9 +85,9 @@ export function HeroSection({ onShopNow }: HeroSectionProps) {
               visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
             }}
           >
-            Discover our curated collection of handcrafted sarees, coord sets,
-            and kurties — each piece a testament to India's timeless textile
-            heritage.
+            Discover our curated collection of handcrafted suit sets, coord
+            sets, and kurti sets — each piece a testament to India's timeless
+            textile heritage.
           </motion.p>
 
           {/* CTA */}

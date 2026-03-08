@@ -17,7 +17,7 @@ import { CollectionPageContent } from "./pages/CollectionPage";
 type Route = { page: "home" } | { page: "collection"; category: Category };
 
 const SLUG_TO_CATEGORY: Record<string, Category> = {
-  "suite-sets": Category.Kurties,
+  "suit-sets": Category.Kurties,
   "kurti-sets": Category.Sarees,
   "coord-sets": Category.CoordSets,
 };
@@ -25,7 +25,7 @@ const SLUG_TO_CATEGORY: Record<string, Category> = {
 const CATEGORY_TO_SLUG: Record<Category, string> = {
   [Category.Sarees]: "kurti-sets",
   [Category.CoordSets]: "coord-sets",
-  [Category.Kurties]: "suite-sets",
+  [Category.Kurties]: "suit-sets",
 };
 
 function resolveRoute(): Route {

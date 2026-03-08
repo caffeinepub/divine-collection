@@ -20,7 +20,7 @@ const navLinks = [
 ];
 
 const collections = [
-  { label: "Suite Sets", slug: "suite-sets" },
+  { label: "Suit Sets", slug: "suit-sets" },
   { label: "Kurti Sets", slug: "kurti-sets" },
   { label: "Coord Sets", slug: "coord-sets" },
 ];

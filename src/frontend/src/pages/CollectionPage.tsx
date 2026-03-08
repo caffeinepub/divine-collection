@@ -52,7 +52,7 @@ const FALLBACK_PRODUCTS: Product[] = [
   // ── Suite Sets ──────────────────────────────────────────────────────────────
   {
     id: BigInt(7),
-    name: "Suite Set 1",
+    name: "Suit Set 1",
     description:
       "A classic Indian suit set with intricate detailing, complete with matching dupatta — perfect for all occasions.",
     isFeatured: true,
@@ -61,7 +61,7 @@ const FALLBACK_PRODUCTS: Product[] = [
   },
   {
     id: BigInt(8),
-    name: "Suite Set 2",
+    name: "Suit Set 2",
     description:
       "A vibrant and stylish Indian suit set with bold prints and a matching dupatta.",
     isFeatured: false,
@@ -70,7 +70,7 @@ const FALLBACK_PRODUCTS: Product[] = [
   },
   {
     id: BigInt(9),
-    name: "Suite Set 3",
+    name: "Suit Set 3",
     description:
       "An elegantly designed suit set with traditional embellishments and a graceful silhouette.",
     isFeatured: false,
@@ -79,7 +79,7 @@ const FALLBACK_PRODUCTS: Product[] = [
   },
   {
     id: BigInt(16),
-    name: "Suite Set 4",
+    name: "Suit Set 4",
     description:
       "A beautifully crafted suit set featuring traditional Indian textile artistry and vibrant hues.",
     isFeatured: false,
@@ -88,7 +88,7 @@ const FALLBACK_PRODUCTS: Product[] = [
   },
   {
     id: BigInt(17),
-    name: "Suite Set 5",
+    name: "Suit Set 5",
     description:
       "A rich and festive suit set with artistic prints and coordinated dupatta, ideal for celebrations.",
     isFeatured: false,
@@ -97,7 +97,7 @@ const FALLBACK_PRODUCTS: Product[] = [
   },
   {
     id: BigInt(18),
-    name: "Suite Set 6",
+    name: "Suit Set 6",
     description:
       "A stunning suit set adorned with traditional Indian motifs, crafted for both everyday and festive wear.",
     isFeatured: true,
@@ -137,10 +137,10 @@ const COLLECTION_META: Record<
       "linear-gradient(135deg, oklch(0.18 0.05 60 / 0.88) 0%, oklch(0.30 0.10 80 / 0.70) 100%)",
   },
   [Category.Kurties]: {
-    title: "Suite Sets",
+    title: "Suit Sets",
     subtitle: "Artisan Crafted Elegance",
     description:
-      "From delicate chikankari to vibrant bandhani, our suite sets bring comfort and artistry to your wardrobe — each one handcrafted with care and adorned with traditional embellishments.",
+      "From delicate chikankari to vibrant bandhani, our suit sets bring comfort and artistry to your wardrobe — each one handcrafted with care and adorned with traditional embellishments.",
     heroImage:
       "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-1--1.jpeg",
     heroGradient:
