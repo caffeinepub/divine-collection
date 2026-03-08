@@ -2,11 +2,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle2, Loader2, Mail, MapPin, Phone } from "lucide-react";
+import { CheckCircle2, Loader2, MapPin, Phone, QrCode } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
+import QRCode from "react-qr-code";
 import { toast } from "sonner";
 import { useSubmitContactMessage } from "../hooks/useQueries";
+
+const SITE_URL = window.location.origin;
 
 interface FormState {
   name: string;
@@ -287,23 +290,6 @@ export function ContactSection() {
 
               <div className="flex gap-4 items-start">
                 <div className="flex-shrink-0 w-10 h-10 rounded-full gold-gradient flex items-center justify-center">
-                  <Mail className="h-4 w-4 text-charcoal" />
-                </div>
-                <div>
-                  <p className="font-semibold text-foreground text-sm mb-0.5">
-                    Email
-                  </p>
-                  <p className="text-muted-foreground text-sm">
-                    contact@divinecollection.in
-                  </p>
-                  <p className="text-muted-foreground text-sm">
-                    support@divinecollection.in
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-4 items-start">
-                <div className="flex-shrink-0 w-10 h-10 rounded-full gold-gradient flex items-center justify-center">
                   <Phone className="h-4 w-4 text-charcoal" />
                 </div>
                 <div>
@@ -339,6 +325,38 @@ export function ContactSection() {
                   <strong className="text-foreground">Store Hours:</strong>{" "}
                   Mon–Sat, 10:00 AM – 7:30 PM IST
                 </p>
+              </div>
+
+              {/* QR Code */}
+              <div className="pt-4 border-t border-border">
+                <div className="flex gap-4 items-start">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full gold-gradient flex items-center justify-center">
+                    <QrCode className="h-4 w-4 text-charcoal" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground text-sm mb-2">
+                      Share Our Store
+                    </p>
+                    <p className="text-muted-foreground text-xs mb-3">
+                      Scan to visit Divine Collection on any device
+                    </p>
+                    <div
+                      className="bg-white p-3 inline-block rounded-sm shadow-md"
+                      data-ocid="contact.qr_code"
+                    >
+                      <QRCode
+                        value={SITE_URL}
+                        size={140}
+                        fgColor="#1a1a1a"
+                        bgColor="#ffffff"
+                        level="M"
+                      />
+                    </div>
+                    <p className="text-muted-foreground text-xs mt-2 break-all max-w-[180px]">
+                      {SITE_URL}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </motion.div>
