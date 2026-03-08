@@ -12,28 +12,28 @@ import { ProductCard } from "./ProductCard";
 // fallback static featured products for initial load
 const FALLBACK_FEATURED: Product[] = [
   {
-    id: BigInt(1),
-    name: "Silk Magenta Saree",
+    id: BigInt(21),
+    name: "Grey Embroidered Kurti Set",
     description:
-      "Exquisite pure silk saree with intricate golden zari embroidery and traditional woven motifs.",
+      "Elegant grey cotton kurti set with white embroidery detailing on the neckline and sleeves.",
     isFeatured: true,
     category: Category.Sarees,
-    price: BigInt(8500),
+    price: BigInt(0),
   },
   {
     id: BigInt(4),
-    name: "Rose Pink Coord Set",
+    name: "Blue Floral Coord Set",
     description:
-      "Elegant rose pink coordinate set with delicate floral embroidery and mirror work details.",
+      "Stunning teal blue coord set with bold white floral print, featuring a button-front kurta and matching straight pants.",
     isFeatured: true,
     category: Category.CoordSets,
-    price: BigInt(3800),
+    price: BigInt(0),
   },
   {
     id: BigInt(7),
-    name: "Teal Anarkali Kurti",
+    name: "White Embroidered Suit",
     description:
-      "Flowing teal Anarkali kurti with golden thread embroidery and traditional Indian motifs.",
+      "Elegant off-white silk suit with subtle gold embroidery on neckline and hem, complete with matching dupatta.",
     isFeatured: true,
     category: Category.Kurties,
     price: BigInt(2200),

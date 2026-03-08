@@ -5,7 +5,6 @@ import { motion } from "motion/react";
 import type { Product } from "../backend.d";
 import { Category } from "../backend.d";
 import { useCart } from "../hooks/useCart";
-import { formatPrice } from "../hooks/useQueries";
 
 interface ProductCardProps {
   product: Product;
@@ -23,7 +22,7 @@ const categoryColors: Record<Category, string> = {
 const categoryLabels: Record<Category, string> = {
   [Category.Sarees]: "Saree",
   [Category.CoordSets]: "Coord Set",
-  [Category.Kurties]: "Kurti",
+  [Category.Kurties]: "Suit",
 };
 
 export function ProductCard({
@@ -91,10 +90,7 @@ export function ProductCard({
         <p className="text-muted-foreground text-xs mb-3 line-clamp-2 leading-relaxed">
           {product.description}
         </p>
-        <div className="flex items-center justify-between">
-          <span className="font-display font-bold text-primary text-lg">
-            {formatPrice(product.price)}
-          </span>
+        <div className="flex items-center justify-end">
           <Button
             data-ocid="product.add_button"
             onClick={() => addItem(product, image)}

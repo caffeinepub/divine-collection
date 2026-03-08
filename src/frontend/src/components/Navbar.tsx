@@ -1,12 +1,15 @@
 import { Button } from "@/components/ui/button";
-import { Menu, ShoppingBag, X } from "lucide-react";
+import { ChevronDown, Menu, ShoppingBag, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useCart } from "../hooks/useCart";
 
 interface NavbarProps {
   activeSection: string;
   onNavigate: (section: string) => void;
+  /** If true, nav links point back to home page */
+  isCollectionPage?: boolean;
+  onNavigateToCollection?: (slug: string) => void;
 }
 
 const navLinks = [
@@ -16,10 +19,23 @@ const navLinks = [
   { id: "contact", label: "Contact" },
 ];
 
-export function Navbar({ activeSection, onNavigate }: NavbarProps) {
+const collections = [
+  { label: "Suite Sets", slug: "suite-sets" },
+  { label: "Kurti Sets", slug: "kurti-sets" },
+  { label: "Coord Sets", slug: "coord-sets" },
+];
+
+export function Navbar({
+  activeSection,
+  onNavigate,
+  isCollectionPage = false,
+  onNavigateToCollection,
+}: NavbarProps) {
   const { totalItems, openCart } = useCart();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [collectionsOpen, setCollectionsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -29,16 +45,47 @@ export function Navbar({ activeSection, onNavigate }: NavbarProps) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
+        setCollectionsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const handleNav = (section: string) => {
     onNavigate(section);
     setMobileMenuOpen(false);
+    setCollectionsOpen(false);
   };
+
+  const handleCollection = (slug: string) => {
+    if (onNavigateToCollection) {
+      onNavigateToCollection(slug);
+    }
+    setMobileMenuOpen(false);
+    setCollectionsOpen(false);
+  };
+
+  const textColor =
+    isScrolled || isCollectionPage
+      ? "text-charcoal hover:text-primary"
+      : "text-ivory/90 hover:text-ivory";
+
+  const activeLinkColor =
+    isScrolled || isCollectionPage ? "text-primary" : "text-ivory";
 
   return (
     <>
       <motion.header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          isScrolled
+          isScrolled || isCollectionPage
             ? "bg-ivory/95 backdrop-blur-md shadow-md border-b border-border"
             : "bg-transparent"
         }`}
@@ -51,6 +98,7 @@ export function Navbar({ activeSection, onNavigate }: NavbarProps) {
             {/* Logo */}
             <button
               type="button"
+              data-ocid="nav.home_link"
               onClick={() => handleNav("home")}
               className="flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold rounded"
             >
@@ -73,15 +121,13 @@ export function Navbar({ activeSection, onNavigate }: NavbarProps) {
                   data-ocid={`nav.${link.id}_link`}
                   onClick={() => handleNav(link.id)}
                   className={`relative px-4 py-2 text-sm font-medium tracking-wide transition-colors duration-200 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold ${
-                    activeSection === link.id
-                      ? "text-primary"
-                      : isScrolled
-                        ? "text-charcoal hover:text-primary"
-                        : "text-ivory/90 hover:text-ivory"
+                    activeSection === link.id && !isCollectionPage
+                      ? activeLinkColor
+                      : textColor
                   }`}
                 >
                   {link.label}
-                  {activeSection === link.id && (
+                  {activeSection === link.id && !isCollectionPage && (
                     <motion.span
                       layoutId="nav-indicator"
                       className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-gold rounded-full"
@@ -89,6 +135,54 @@ export function Navbar({ activeSection, onNavigate }: NavbarProps) {
                   )}
                 </button>
               ))}
+
+              {/* Collections dropdown */}
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  type="button"
+                  data-ocid="nav.collections_toggle"
+                  onClick={() => setCollectionsOpen(!collectionsOpen)}
+                  className={`relative flex items-center gap-1 px-4 py-2 text-sm font-medium tracking-wide transition-colors duration-200 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold ${
+                    isCollectionPage ? activeLinkColor : textColor
+                  }`}
+                >
+                  Collections
+                  <ChevronDown
+                    className={`h-3.5 w-3.5 transition-transform duration-200 ${collectionsOpen ? "rotate-180" : ""}`}
+                  />
+                  {isCollectionPage && (
+                    <motion.span
+                      layoutId="nav-indicator"
+                      className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-gold rounded-full"
+                    />
+                  )}
+                </button>
+
+                <AnimatePresence>
+                  {collectionsOpen && (
+                    <motion.div
+                      data-ocid="nav.collections_dropdown_menu"
+                      initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute top-full left-0 mt-1 w-48 bg-ivory border border-border shadow-lg overflow-hidden z-50"
+                    >
+                      {collections.map((col) => (
+                        <button
+                          key={col.slug}
+                          type="button"
+                          data-ocid={`nav.${col.slug}_link`}
+                          onClick={() => handleCollection(col.slug)}
+                          className="w-full text-left px-4 py-3 text-sm text-charcoal hover:text-primary hover:bg-secondary transition-colors border-b border-border/50 last:border-0"
+                        >
+                          {col.label}
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </nav>
 
             {/* Cart + Mobile Menu */}
@@ -98,7 +192,7 @@ export function Navbar({ activeSection, onNavigate }: NavbarProps) {
                 data-ocid="nav.cart_button"
                 onClick={openCart}
                 className={`relative p-2 rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold ${
-                  isScrolled
+                  isScrolled || isCollectionPage
                     ? "text-charcoal hover:text-primary hover:bg-secondary"
                     : "text-ivory hover:text-ivory/80"
                 }`}
@@ -120,7 +214,9 @@ export function Navbar({ activeSection, onNavigate }: NavbarProps) {
               <button
                 type="button"
                 className={`md:hidden p-2 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold ${
-                  isScrolled ? "text-charcoal" : "text-ivory"
+                  isScrolled || isCollectionPage
+                    ? "text-charcoal"
+                    : "text-ivory"
                 }`}
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 aria-label="Toggle menu"
@@ -144,7 +240,7 @@ export function Navbar({ activeSection, onNavigate }: NavbarProps) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.2 }}
-            className="fixed top-16 left-0 right-0 z-40 bg-ivory border-b border-border shadow-lg md:hidden"
+            className="fixed top-16 left-0 right-0 z-40 bg-ivory border-b border-border shadow-lg md:hidden max-h-[80vh] overflow-y-auto"
           >
             <nav className="flex flex-col py-4 px-4 gap-1">
               {navLinks.map((link) => (
@@ -154,7 +250,7 @@ export function Navbar({ activeSection, onNavigate }: NavbarProps) {
                   data-ocid={`nav.${link.id}_link`}
                   onClick={() => handleNav(link.id)}
                   className={`text-left px-4 py-3 rounded-lg text-sm font-medium transition-colors duration-200 ${
-                    activeSection === link.id
+                    activeSection === link.id && !isCollectionPage
                       ? "text-primary bg-secondary"
                       : "text-charcoal hover:text-primary hover:bg-secondary"
                   }`}
@@ -162,6 +258,24 @@ export function Navbar({ activeSection, onNavigate }: NavbarProps) {
                   {link.label}
                 </button>
               ))}
+
+              {/* Collections divider + links */}
+              <div className="pt-2 pb-1">
+                <p className="px-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                  Collections
+                </p>
+                {collections.map((col) => (
+                  <button
+                    key={col.slug}
+                    type="button"
+                    data-ocid={`nav.${col.slug}_link`}
+                    onClick={() => handleCollection(col.slug)}
+                    className="w-full text-left px-6 py-2.5 rounded-lg text-sm font-medium text-charcoal hover:text-primary hover:bg-secondary transition-colors"
+                  >
+                    {col.label}
+                  </button>
+                ))}
+              </div>
             </nav>
           </motion.div>
         )}

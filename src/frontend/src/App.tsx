@@ -1,5 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import { useCallback, useEffect, useState } from "react";
+import { Category } from "./backend.d";
 import { AboutSection } from "./components/AboutSection";
 import { CartDrawer } from "./components/CartDrawer";
 import { ContactSection } from "./components/ContactSection";
@@ -10,12 +11,42 @@ import { Navbar } from "./components/Navbar";
 import { ShopSection } from "./components/ShopSection";
 import { CartProvider } from "./hooks/useCart";
 import { useInitBackend } from "./hooks/useQueries";
+import { CollectionPageContent } from "./pages/CollectionPage";
 
-function AppContent() {
+// ── Route types ──────────────────────────────────────────────────────────────
+type Route = { page: "home" } | { page: "collection"; category: Category };
+
+const SLUG_TO_CATEGORY: Record<string, Category> = {
+  "suite-sets": Category.Kurties,
+  "kurti-sets": Category.Sarees,
+  "coord-sets": Category.CoordSets,
+};
+
+const CATEGORY_TO_SLUG: Record<Category, string> = {
+  [Category.Sarees]: "kurti-sets",
+  [Category.CoordSets]: "coord-sets",
+  [Category.Kurties]: "suite-sets",
+};
+
+function resolveRoute(): Route {
+  const path = window.location.pathname;
+  const match = path.match(/^\/collections\/([^/]+)/);
+  if (match) {
+    const category = SLUG_TO_CATEGORY[match[1]];
+    if (category) return { page: "collection", category };
+  }
+  return { page: "home" };
+}
+
+// ── Home page content ────────────────────────────────────────────────────────
+function HomePage({
+  onNavigateToCollection,
+}: {
+  onNavigateToCollection: (slug: string) => void;
+}) {
   const [activeSection, setActiveSection] = useState("home");
   useInitBackend();
 
-  // Intersection Observer to track active section
   useEffect(() => {
     const sections = ["home", "shop", "about", "contact"];
     const observers: IntersectionObserver[] = [];
@@ -50,7 +81,11 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar activeSection={activeSection} onNavigate={navigateTo} />
+      <Navbar
+        activeSection={activeSection}
+        onNavigate={navigateTo}
+        onNavigateToCollection={onNavigateToCollection}
+      />
       <main>
         <HeroSection onShopNow={() => navigateTo("shop")} />
 
@@ -70,15 +105,89 @@ function AppContent() {
       </main>
       <Footer onNavigate={navigateTo} />
       <CartDrawer />
-      <Toaster position="top-right" richColors />
     </div>
   );
+}
+
+// ── Root App ─────────────────────────────────────────────────────────────────
+function AppContent() {
+  const [route, setRoute] = useState<Route>(resolveRoute);
+
+  // Keep URL in sync with route state
+  useEffect(() => {
+    if (route.page === "home") {
+      if (window.location.pathname !== "/") {
+        window.history.pushState(null, "", "/");
+      }
+    } else {
+      const slug = CATEGORY_TO_SLUG[route.category];
+      const target = `/collections/${slug}`;
+      if (window.location.pathname !== target) {
+        window.history.pushState(null, "", target);
+      }
+    }
+  }, [route]);
+
+  // Handle browser back/forward
+  useEffect(() => {
+    const handlePop = () => setRoute(resolveRoute());
+    window.addEventListener("popstate", handlePop);
+    return () => window.removeEventListener("popstate", handlePop);
+  }, []);
+
+  // Scroll to top on route change — route is intentionally a dep here
+  // biome-ignore lint/correctness/useExhaustiveDependencies: route triggers scroll
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [route]);
+
+  const navigateToCollection = useCallback((slug: string) => {
+    const category = SLUG_TO_CATEGORY[slug];
+    if (category) {
+      setRoute({ page: "collection", category });
+    }
+  }, []);
+
+  const navigateHome = useCallback((section?: string) => {
+    setRoute({ page: "home" });
+    if (section) {
+      // Defer scroll until home page mounts
+      setTimeout(() => {
+        const el = document.getElementById(section);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 120);
+    }
+  }, []);
+
+  if (route.page === "collection") {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar
+          activeSection={`collection-${route.category}`}
+          onNavigate={(section) => navigateHome(section)}
+          isCollectionPage
+          onNavigateToCollection={navigateToCollection}
+        />
+        {/* pt-16 to offset fixed navbar */}
+        <div className="pt-16 lg:pt-20">
+          <CollectionPageContent
+            category={route.category}
+            onNavigateHome={navigateHome}
+          />
+        </div>
+        <CartDrawer />
+      </div>
+    );
+  }
+
+  return <HomePage onNavigateToCollection={navigateToCollection} />;
 }
 
 export default function App() {
   return (
     <CartProvider>
       <AppContent />
+      <Toaster position="top-right" richColors />
     </CartProvider>
   );
 }

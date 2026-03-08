@@ -266,7 +266,7 @@ export function ContactSection() {
             {/* Decorative image */}
             <div className="relative h-48 overflow-hidden rounded-sm">
               <img
-                src="/assets/generated/coord-set-1.dim_600x800.jpg"
+                src="/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.45-PM-1--1.jpeg"
                 alt="Divine Collection garment"
                 className="w-full h-full object-cover object-top"
                 loading="lazy"
@@ -311,10 +311,7 @@ export function ContactSection() {
                     Phone
                   </p>
                   <p className="text-muted-foreground text-sm">
-                    +91 98765 43210
-                  </p>
-                  <p className="text-muted-foreground text-sm">
-                    +91 99887 76543
+                    +91 72900 16528
                   </p>
                 </div>
               </div>
@@ -328,9 +325,9 @@ export function ContactSection() {
                     Address
                   </p>
                   <p className="text-muted-foreground text-sm leading-relaxed">
-                    Divine Collection, 24 Heritage Lane,
+                    Divine Collection,
                     <br />
-                    Chandni Chowk, New Delhi - 110006,
+                    Greater Noida West,
                     <br />
                     India
                   </p>

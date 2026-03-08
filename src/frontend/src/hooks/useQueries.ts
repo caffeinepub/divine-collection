@@ -81,20 +81,24 @@ export function useInitBackend() {
  */
 // Static image maps — filenames must appear as literals so the build prune
 // script can detect them in compiled JS and does not delete the files.
-const SAREE_IMAGES: Record<number, string> = {
-  1: "/assets/generated/saree-1.dim_600x800.jpg",
-  2: "/assets/generated/saree-2.dim_600x800.jpg",
-  3: "/assets/generated/saree-3.dim_600x800.jpg",
+// Category.Sarees is repurposed as "Kurti Sets"
+const KURTI_SET_IMAGES: Record<number, string> = {
+  1: "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-1.jpeg",
+  2: "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.45-PM-2--2.jpeg",
+  3: "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.45-PM-3--3.jpeg",
 };
 const COORD_SET_IMAGES: Record<number, string> = {
-  1: "/assets/generated/coord-set-1.dim_600x800.jpg",
-  2: "/assets/generated/coord-set-2.dim_600x800.jpg",
-  3: "/assets/generated/coord-set-3.dim_600x800.jpg",
+  1: "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.45-PM-1--1.jpeg",
 };
-const KURTI_IMAGES: Record<number, string> = {
-  1: "/assets/generated/kurti-1.dim_600x800.jpg",
-  2: "/assets/generated/kurti-2.dim_600x800.jpg",
-  3: "/assets/generated/kurti-3.dim_600x800.jpg",
+const SUIT_IMAGES: Record<number, string> = {
+  1: "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-1--1.jpeg",
+  2: "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.48-PM-2.jpeg",
+  3: "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.47-PM-1--3.jpeg",
+  4: "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.47-PM-4.jpeg",
+  5: "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-2--5.jpeg",
+  6: "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.47-PM-3--6.jpeg",
+  7: "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.47-PM-2--7.jpeg",
+  8: "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.51-PM-8.jpeg",
 };
 
 export function getProductImage(
@@ -105,17 +109,25 @@ export function getProductImage(
     a.id < b.id ? -1 : a.id > b.id ? 1 : 0,
   );
   const idx = sorted.findIndex((p) => p.id === product.id);
-  const position = (idx % 3) + 1;
 
   switch (product.category) {
-    case Category.Sarees:
-      return SAREE_IMAGES[position] ?? SAREE_IMAGES[1];
-    case Category.CoordSets:
+    case Category.Sarees: {
+      // Repurposed as Kurti Sets
+      const position = (idx % 3) + 1;
+      return KURTI_SET_IMAGES[position] ?? KURTI_SET_IMAGES[1];
+    }
+    case Category.CoordSets: {
+      const position = (idx % 1) + 1;
       return COORD_SET_IMAGES[position] ?? COORD_SET_IMAGES[1];
-    case Category.Kurties:
-      return KURTI_IMAGES[position] ?? KURTI_IMAGES[1];
-    default:
-      return SAREE_IMAGES[position] ?? SAREE_IMAGES[1];
+    }
+    case Category.Kurties: {
+      const position = (idx % 8) + 1;
+      return SUIT_IMAGES[position] ?? SUIT_IMAGES[1];
+    }
+    default: {
+      const position = (idx % 3) + 1;
+      return KURTI_SET_IMAGES[position] ?? KURTI_SET_IMAGES[1];
+    }
   }
 }
 

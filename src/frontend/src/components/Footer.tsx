@@ -115,8 +115,8 @@ export function Footer({ onNavigate }: FooterProps) {
               </h4>
               <address className="not-italic text-white/60 text-sm space-y-1.5">
                 <p>contact@divinecollection.in</p>
-                <p>+91 98765 43210</p>
-                <p>Chandni Chowk, New Delhi</p>
+                <p>+91 72900 16528</p>
+                <p>Greater Noida West</p>
               </address>
             </div>
           </div>
