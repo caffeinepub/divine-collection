@@ -4,75 +4,126 @@ import { useActor } from "./useActor";
 
 export type { Product, Category };
 
-/** Filter predicate: removes any legacy backend products whose name contains "saree". */
-function excludeSarees(products: Product[]): Product[] {
-  return products.filter((p) => !p.name.toLowerCase().includes("saree"));
-}
-
 /**
- * Renames products to numbered names (Suit 1, Suit 2, Kurti 1, Coord 1, etc.)
- * grouped by category, in ascending ID order, so names are always consistent.
+ * The single source of truth for all products in Divine Collection.
+ * The backend canister contains stale data, so we bypass it entirely
+ * and serve this static catalog directly to every product hook.
  */
-function renumberProducts(products: Product[]): Product[] {
-  const byCategory: Record<string, Product[]> = {};
-  for (const p of products) {
-    const key = String(p.category);
-    if (!byCategory[key]) byCategory[key] = [];
-    byCategory[key].push(p);
-  }
-  // Sort each category by ID ascending for stable numbering
-  for (const key of Object.keys(byCategory)) {
-    byCategory[key].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-  }
-  const categoryLabel: Record<string, string> = {
-    [String(Category.Kurties)]: "Suit",
-    [String(Category.Sarees)]: "Kurti",
-    [String(Category.CoordSets)]: "Coord",
-  };
-  return products.map((p) => {
-    const key = String(p.category);
-    const label = categoryLabel[key] ?? "Product";
-    const idx = byCategory[key].findIndex((x) => x.id === p.id);
-    return { ...p, name: `${label} ${idx + 1}` };
-  });
-}
+export const CATALOG_PRODUCTS: Product[] = [
+  // ── Kurti Sets (Category.Sarees repurposed) ────────────────────────────────
+  {
+    id: BigInt(21),
+    name: "Kurti 1",
+    description:
+      "A beautifully crafted Indian kurti set, perfect for casual and festive occasions.",
+    isFeatured: true,
+    category: Category.Sarees,
+    price: BigInt(650),
+  },
+  {
+    id: BigInt(22),
+    name: "Kurti 2",
+    description:
+      "An elegant kurti set featuring traditional Indian prints and comfortable everyday styling.",
+    isFeatured: false,
+    category: Category.Sarees,
+    price: BigInt(650),
+  },
+  {
+    id: BigInt(23),
+    name: "Kurti 3",
+    description:
+      "A vibrant kurti set with coordinated bottoms, ideal for both casual wear and light festivities.",
+    isFeatured: false,
+    category: Category.Sarees,
+    price: BigInt(650),
+  },
+  // ── Coord Sets ─────────────────────────────────────────────────────────────
+  {
+    id: BigInt(4),
+    name: "Coord 1",
+    description:
+      "A stunning coordinated top-and-bottom set blending traditional craftsmanship with a contemporary silhouette.",
+    isFeatured: true,
+    category: Category.CoordSets,
+    price: BigInt(595),
+  },
+  // ── Suit Sets (Category.Kurties) ───────────────────────────────────────────
+  {
+    id: BigInt(7),
+    name: "Suit 1",
+    description:
+      "A classic Indian suit set with intricate detailing, complete with matching dupatta — perfect for all occasions.",
+    isFeatured: true,
+    category: Category.Kurties,
+    price: BigInt(885),
+  },
+  {
+    id: BigInt(8),
+    name: "Suit 2",
+    description:
+      "A vibrant and stylish Indian suit set with bold prints and a matching dupatta.",
+    isFeatured: false,
+    category: Category.Kurties,
+    price: BigInt(885),
+  },
+  {
+    id: BigInt(9),
+    name: "Suit 3",
+    description:
+      "An elegantly designed suit set with traditional embellishments and a graceful silhouette.",
+    isFeatured: false,
+    category: Category.Kurties,
+    price: BigInt(885),
+  },
+  {
+    id: BigInt(16),
+    name: "Suit 4",
+    description:
+      "A beautifully crafted suit set featuring traditional Indian textile artistry and vibrant hues.",
+    isFeatured: false,
+    category: Category.Kurties,
+    price: BigInt(950),
+  },
+  {
+    id: BigInt(17),
+    name: "Suit 5",
+    description:
+      "A rich and festive suit set with artistic prints and coordinated dupatta, ideal for celebrations.",
+    isFeatured: false,
+    category: Category.Kurties,
+    price: BigInt(950),
+  },
+  {
+    id: BigInt(18),
+    name: "Suit 6",
+    description:
+      "A stunning suit set adorned with traditional Indian motifs, crafted for both everyday and festive wear.",
+    isFeatured: true,
+    category: Category.Kurties,
+    price: BigInt(885),
+  },
+];
 
+/** Always returns the full static catalog — backend is bypassed. */
 export function useAllProducts() {
-  const { actor, isFetching } = useActor();
-  return useQuery<Product[]>({
-    queryKey: ["products", "all"],
-    queryFn: async () => {
-      if (!actor) return [];
-      return renumberProducts(excludeSarees(await actor.getAllProducts()));
-    },
-    enabled: !!actor && !isFetching,
-  });
+  return { data: CATALOG_PRODUCTS, isLoading: false };
 }
 
+/** Always returns only featured products from the static catalog. */
 export function useFeaturedProducts() {
-  const { actor, isFetching } = useActor();
-  return useQuery<Product[]>({
-    queryKey: ["products", "featured"],
-    queryFn: async () => {
-      if (!actor) return [];
-      return renumberProducts(excludeSarees(await actor.getFeaturedProducts()));
-    },
-    enabled: !!actor && !isFetching,
-  });
+  return {
+    data: CATALOG_PRODUCTS.filter((p) => p.isFeatured),
+    isLoading: false,
+  };
 }
 
+/** Always returns products for the given category from the static catalog. */
 export function useProductsByCategory(category: Category) {
-  const { actor, isFetching } = useActor();
-  return useQuery<Product[]>({
-    queryKey: ["products", "category", category],
-    queryFn: async () => {
-      if (!actor) return [];
-      return renumberProducts(
-        excludeSarees(await actor.getProductsByCategory(category)),
-      );
-    },
-    enabled: !!actor && !isFetching,
-  });
+  return {
+    data: CATALOG_PRODUCTS.filter((p) => p.category === category),
+    isLoading: false,
+  };
 }
 
 export function useSubmitContactMessage() {
@@ -174,5 +225,5 @@ export function getProductImage(
  */
 export function formatPrice(price: bigint): string {
   const num = Number(price);
-  return `₹${num.toLocaleString("en-IN")}`;
+  return `₹${num.toLocaleString("en-IN")}/-`;
 }

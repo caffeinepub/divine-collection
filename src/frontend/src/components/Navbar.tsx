@@ -22,7 +22,7 @@ const navLinks = [
 const collections = [
   { label: "Suit Sets", slug: "suit-sets" },
   { label: "Kurti Sets", slug: "kurti-sets" },
-  { label: "Coord Sets", slug: "coord-sets" },
+  { label: "Co-ord Sets", slug: "coord-sets" },
 ];
 
 export function Navbar({

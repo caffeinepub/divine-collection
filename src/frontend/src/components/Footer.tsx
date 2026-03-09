@@ -9,7 +9,7 @@ const categoryLinks = [
   { label: "All Collections", section: "shop" },
   { label: "Suit Sets", section: "shop" },
   { label: "Kurti Sets", section: "shop" },
-  { label: "Coord Sets", section: "shop" },
+  { label: "Co-ord Sets", section: "shop" },
 ];
 
 const quickLinks = [
@@ -39,7 +39,7 @@ export function Footer({ onNavigate }: FooterProps) {
             />
             <p className="text-white/60 text-sm leading-relaxed max-w-xs">
               Celebrating India's rich textile heritage through authentic
-              handcrafted suit sets, coord sets, and kurti sets — draped in
+              handcrafted suit sets, co-ord sets, and kurti sets — draped in
               tradition, styled for today.
             </p>
             {/* Social Links */}

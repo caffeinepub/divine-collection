@@ -2,10 +2,13 @@ import type React from "react";
 import { createContext, useContext, useReducer, useState } from "react";
 import type { Product } from "../backend.d";
 
+export type ProductSize = "M" | "L" | "XL" | "XXL";
+
 export interface CartItem {
   product: Product;
   quantity: number;
   image: string;
+  size: ProductSize;
 }
 
 interface CartState {
@@ -14,10 +17,10 @@ interface CartState {
 }
 
 type CartAction =
-  | { type: "ADD_ITEM"; product: Product; image: string }
-  | { type: "REMOVE_ITEM"; productId: bigint }
-  | { type: "INCREMENT"; productId: bigint }
-  | { type: "DECREMENT"; productId: bigint }
+  | { type: "ADD_ITEM"; product: Product; image: string; size: ProductSize }
+  | { type: "REMOVE_ITEM"; productId: bigint; size: ProductSize }
+  | { type: "INCREMENT"; productId: bigint; size: ProductSize }
+  | { type: "DECREMENT"; productId: bigint; size: ProductSize }
   | { type: "CLEAR_CART" }
   | { type: "OPEN_CART" }
   | { type: "CLOSE_CART" };
@@ -26,14 +29,15 @@ function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
     case "ADD_ITEM": {
       const exists = state.items.find(
-        (item) => item.product.id === action.product.id,
+        (item) =>
+          item.product.id === action.product.id && item.size === action.size,
       );
       if (exists) {
         return {
           ...state,
           isOpen: true,
           items: state.items.map((item) =>
-            item.product.id === action.product.id
+            item.product.id === action.product.id && item.size === action.size
               ? { ...item, quantity: item.quantity + 1 }
               : item,
           ),
@@ -44,7 +48,12 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         isOpen: true,
         items: [
           ...state.items,
-          { product: action.product, quantity: 1, image: action.image },
+          {
+            product: action.product,
+            quantity: 1,
+            image: action.image,
+            size: action.size,
+          },
         ],
       };
     }
@@ -52,14 +61,17 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       return {
         ...state,
         items: state.items.filter(
-          (item) => item.product.id !== action.productId,
+          (item) =>
+            !(
+              item.product.id === action.productId && item.size === action.size
+            ),
         ),
       };
     case "INCREMENT":
       return {
         ...state,
         items: state.items.map((item) =>
-          item.product.id === action.productId
+          item.product.id === action.productId && item.size === action.size
             ? { ...item, quantity: item.quantity + 1 }
             : item,
         ),
@@ -69,7 +81,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         ...state,
         items: state.items
           .map((item) =>
-            item.product.id === action.productId
+            item.product.id === action.productId && item.size === action.size
               ? { ...item, quantity: item.quantity - 1 }
               : item,
           )
@@ -91,10 +103,10 @@ interface CartContextValue {
   isOpen: boolean;
   totalItems: number;
   totalPrice: bigint;
-  addItem: (product: Product, image: string) => void;
-  removeItem: (productId: bigint) => void;
-  increment: (productId: bigint) => void;
-  decrement: (productId: bigint) => void;
+  addItem: (product: Product, image: string, size: ProductSize) => void;
+  removeItem: (productId: bigint, size: ProductSize) => void;
+  increment: (productId: bigint, size: ProductSize) => void;
+  decrement: (productId: bigint, size: ProductSize) => void;
   clearCart: () => void;
   openCart: () => void;
   closeCart: () => void;
@@ -121,11 +133,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         isOpen: state.isOpen,
         totalItems,
         totalPrice,
-        addItem: (product, image) =>
-          dispatch({ type: "ADD_ITEM", product, image }),
-        removeItem: (productId) => dispatch({ type: "REMOVE_ITEM", productId }),
-        increment: (productId) => dispatch({ type: "INCREMENT", productId }),
-        decrement: (productId) => dispatch({ type: "DECREMENT", productId }),
+        addItem: (product, image, size) =>
+          dispatch({ type: "ADD_ITEM", product, image, size }),
+        removeItem: (productId, size) =>
+          dispatch({ type: "REMOVE_ITEM", productId, size }),
+        increment: (productId, size) =>
+          dispatch({ type: "INCREMENT", productId, size }),
+        decrement: (productId, size) =>
+          dispatch({ type: "DECREMENT", productId, size }),
         clearCart: () => dispatch({ type: "CLEAR_CART" }),
         openCart: () => dispatch({ type: "OPEN_CART" }),
         closeCart: () => dispatch({ type: "CLOSE_CART" }),

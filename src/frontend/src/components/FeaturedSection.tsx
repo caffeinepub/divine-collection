@@ -1,6 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "motion/react";
-import { Category } from "../backend.d";
+import { useState } from "react";
 import type { Product } from "../backend.d";
 import {
   getProductImage,
@@ -8,57 +8,34 @@ import {
   useFeaturedProducts,
 } from "../hooks/useQueries";
 import { ProductCard } from "./ProductCard";
-
-// fallback static featured products for initial load
-const FALLBACK_FEATURED: Product[] = [
-  {
-    id: BigInt(21),
-    name: "Kurti 1",
-    description:
-      "A beautifully crafted Indian kurti set, perfect for casual and festive occasions.",
-    isFeatured: true,
-    category: Category.Sarees,
-    price: BigInt(0),
-  },
-  {
-    id: BigInt(4),
-    name: "Coord 1",
-    description:
-      "A stunning coordinated top-and-bottom set blending traditional craftsmanship with a contemporary silhouette.",
-    isFeatured: true,
-    category: Category.CoordSets,
-    price: BigInt(0),
-  },
-  {
-    id: BigInt(7),
-    name: "Suit 1",
-    description:
-      "A classic Indian suit set with intricate detailing, complete with matching dupatta — perfect for all occasions.",
-    isFeatured: true,
-    category: Category.Kurties,
-    price: BigInt(0),
-  },
-];
-
-function getCategoryProducts(
-  allProducts: Product[],
-  category: Category,
-): Product[] {
-  return allProducts.filter((p) => p.category === category);
-}
+import { ProductQuickView } from "./ProductQuickView";
 
 export function FeaturedSection() {
   const { data: featured, isLoading } = useFeaturedProducts();
   const { data: allProducts } = useAllProducts();
 
-  const products =
-    featured && featured.length > 0 ? featured : FALLBACK_FEATURED;
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(
+    null,
+  );
+  const [quickViewImage, setQuickViewImage] = useState<string>("");
+
+  const products = featured ?? [];
 
   const getImage = (product: Product) => {
-    const catProds = allProducts
-      ? getCategoryProducts(allProducts, product.category)
-      : getCategoryProducts(products, product.category);
+    const catProds = (allProducts ?? []).filter(
+      (p) => p.category === product.category,
+    );
     return getProductImage(product, catProds);
+  };
+
+  const handleQuickView = (product: Product, image: string) => {
+    setQuickViewProduct(product);
+    setQuickViewImage(image);
+  };
+
+  const handleCloseQuickView = () => {
+    setQuickViewProduct(null);
+    setQuickViewImage("");
   };
 
   return (
@@ -110,11 +87,20 @@ export function FeaturedSection() {
                 image={getImage(product)}
                 index={idx + 1}
                 ocidScope="featured"
+                onQuickView={handleQuickView}
               />
             ))}
           </div>
         )}
       </div>
+
+      {/* Quick View Modal */}
+      <ProductQuickView
+        product={quickViewProduct}
+        image={quickViewImage}
+        open={quickViewProduct !== null}
+        onClose={handleCloseQuickView}
+      />
     </section>
   );
 }

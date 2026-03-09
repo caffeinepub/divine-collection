@@ -194,7 +194,7 @@
   }
 
   .img-zoom:hover img {
-    @apply scale-105;
+    @apply scale-110;
   }
 
   .section-divider {

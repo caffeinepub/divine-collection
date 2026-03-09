@@ -5,6 +5,7 @@ import { Category } from "../backend.d";
 import type { Product } from "../backend.d";
 import { getProductImage, useAllProducts } from "../hooks/useQueries";
 import { ProductCard } from "./ProductCard";
+import { ProductQuickView } from "./ProductQuickView";
 
 type FilterTab = "All" | Category;
 
@@ -12,112 +13,19 @@ const tabs: { value: FilterTab; label: string }[] = [
   { value: "All", label: "All Collections" },
   { value: Category.Kurties, label: "Suit Sets" },
   { value: Category.Sarees, label: "Kurti Sets" },
-  { value: Category.CoordSets, label: "Coord Sets" },
-];
-
-// Fallback products
-const FALLBACK_PRODUCTS: Product[] = [
-  // ── Kurti Sets ──────────────────────────────────────────────────────────────
-  {
-    id: BigInt(21),
-    name: "Kurti 1",
-    description:
-      "A beautifully crafted Indian kurti set, perfect for casual and festive occasions.",
-    isFeatured: true,
-    category: Category.Sarees,
-    price: BigInt(0),
-  },
-  {
-    id: BigInt(22),
-    name: "Kurti 2",
-    description:
-      "An elegant kurti set featuring traditional Indian prints and comfortable everyday styling.",
-    isFeatured: false,
-    category: Category.Sarees,
-    price: BigInt(0),
-  },
-  {
-    id: BigInt(23),
-    name: "Kurti 3",
-    description:
-      "A vibrant kurti set with coordinated bottoms, ideal for both casual wear and light festivities.",
-    isFeatured: false,
-    category: Category.Sarees,
-    price: BigInt(0),
-  },
-  // ── Coord Sets ──────────────────────────────────────────────────────────────
-  {
-    id: BigInt(4),
-    name: "Coord 1",
-    description:
-      "A stunning coordinated top-and-bottom set blending traditional craftsmanship with a contemporary silhouette.",
-    isFeatured: true,
-    category: Category.CoordSets,
-    price: BigInt(0),
-  },
-  // ── Suit Sets ──────────────────────────────────────────────────────────────
-  {
-    id: BigInt(7),
-    name: "Suit 1",
-    description:
-      "A classic Indian suit set with intricate detailing, complete with matching dupatta — perfect for all occasions.",
-    isFeatured: true,
-    category: Category.Kurties,
-    price: BigInt(0),
-  },
-  {
-    id: BigInt(8),
-    name: "Suit 2",
-    description:
-      "A vibrant and stylish Indian suit set with bold prints and a matching dupatta.",
-    isFeatured: false,
-    category: Category.Kurties,
-    price: BigInt(0),
-  },
-  {
-    id: BigInt(9),
-    name: "Suit 3",
-    description:
-      "An elegantly designed suit set with traditional embellishments and a graceful silhouette.",
-    isFeatured: false,
-    category: Category.Kurties,
-    price: BigInt(0),
-  },
-  {
-    id: BigInt(16),
-    name: "Suit 4",
-    description:
-      "A beautifully crafted suit set featuring traditional Indian textile artistry and vibrant hues.",
-    isFeatured: false,
-    category: Category.Kurties,
-    price: BigInt(0),
-  },
-  {
-    id: BigInt(17),
-    name: "Suit 5",
-    description:
-      "A rich and festive suit set with artistic prints and coordinated dupatta, ideal for celebrations.",
-    isFeatured: false,
-    category: Category.Kurties,
-    price: BigInt(0),
-  },
-  {
-    id: BigInt(18),
-    name: "Suit 6",
-    description:
-      "A stunning suit set adorned with traditional Indian motifs, crafted for both everyday and festive wear.",
-    isFeatured: true,
-    category: Category.Kurties,
-    price: BigInt(0),
-  },
+  { value: Category.CoordSets, label: "Co-ord Sets" },
 ];
 
 export function ShopSection() {
   const [activeTab, setActiveTab] = useState<FilterTab>("All");
   const { data: allProducts, isLoading } = useAllProducts();
 
-  const products =
-    allProducts && allProducts.length > 0 ? allProducts : FALLBACK_PRODUCTS;
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(
+    null,
+  );
+  const [quickViewImage, setQuickViewImage] = useState<string>("");
+
+  const products = allProducts ?? [];
 
   const getCategoryProducts = (category: Category) =>
     products.filter((p) => p.category === category);
@@ -130,6 +38,16 @@ export function ShopSection() {
   const getImage = (product: Product) => {
     const catProds = getCategoryProducts(product.category);
     return getProductImage(product, catProds);
+  };
+
+  const handleQuickView = (product: Product, image: string) => {
+    setQuickViewProduct(product);
+    setQuickViewImage(image);
+  };
+
+  const handleCloseQuickView = () => {
+    setQuickViewProduct(null);
+    setQuickViewImage("");
   };
 
   return (
@@ -151,7 +69,7 @@ export function ShopSection() {
           </h2>
           <div className="section-divider max-w-xs mx-auto mt-4" />
           <p className="text-muted-foreground mt-4 text-base max-w-xl mx-auto">
-            From elegant suit sets to kurti sets and festive coord sets — find
+            From elegant suit sets to kurti sets and festive co-ord sets — find
             your perfect piece.
           </p>
         </motion.div>
@@ -213,11 +131,20 @@ export function ShopSection() {
                 image={getImage(product)}
                 index={idx + 1}
                 ocidScope="shop"
+                onQuickView={handleQuickView}
               />
             ))}
           </motion.div>
         )}
       </div>
+
+      {/* Quick View Modal */}
+      <ProductQuickView
+        product={quickViewProduct}
+        image={quickViewImage}
+        open={quickViewProduct !== null}
+        onClose={handleCloseQuickView}
+      />
     </section>
   );
 }

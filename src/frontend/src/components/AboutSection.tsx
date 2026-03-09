@@ -100,7 +100,7 @@ export function AboutSection() {
             className="space-y-8"
           >
             {/* Decorative image collage */}
-            <div className="relative h-64 lg:h-80 rounded-sm overflow-hidden">
+            <div className="relative h-64 lg:h-80 rounded-sm overflow-hidden img-zoom">
               <img
                 src="/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-1.jpeg"
                 alt="Kurti Set"

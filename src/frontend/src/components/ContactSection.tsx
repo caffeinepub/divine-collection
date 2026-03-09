@@ -4,16 +4,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle2, Loader2, MapPin, Phone, QrCode } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { QRCodeSVG } from "qrcode.react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useSubmitContactMessage } from "../hooks/useQueries";
+import { QRCodeSVG } from "./QRCode";
 
 // Use the current origin so it always reflects the deployed URL
 const SITE_URL = window.location.origin;
 
-/** Renders an inline SVG QR code using qrcode.react (no external API). */
-function SiteQRCode({ url, size = 150 }: { url: string; size?: number }) {
+/** Renders an inline SVG QR code using qrcode.react (level H = highest error correction). */
+function SiteQRCode({ url, size = 160 }: { url: string; size?: number }) {
   return (
     <QRCodeSVG
       value={url}
@@ -21,6 +21,7 @@ function SiteQRCode({ url, size = 150 }: { url: string; size?: number }) {
       level="H"
       bgColor="#ffffff"
       fgColor="#1a1a1a"
+      marginSize={2}
     />
   );
 }
@@ -358,7 +359,7 @@ export function ContactSection() {
                       className="bg-white p-3 inline-block rounded-sm shadow-md border border-border"
                       data-ocid="contact.qr_code"
                     >
-                      <SiteQRCode url={SITE_URL} size={150} />
+                      <SiteQRCode url={SITE_URL} size={160} />
                     </div>
                     <p className="text-muted-foreground text-xs mt-2 break-all max-w-[180px]">
                       Divine Collection
