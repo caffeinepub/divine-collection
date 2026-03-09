@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle2, Loader2, MapPin, Phone, QrCode } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
+import { QRCodeSVG } from "qrcode.react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useSubmitContactMessage } from "../hooks/useQueries";
@@ -11,17 +12,15 @@ import { useSubmitContactMessage } from "../hooks/useQueries";
 // Use the current origin so it always reflects the deployed URL
 const SITE_URL = window.location.origin;
 
-/** Renders a QR code image via Google Charts API (no extra dependency). */
+/** Renders an inline SVG QR code using qrcode.react (no external API). */
 function SiteQRCode({ url, size = 150 }: { url: string; size?: number }) {
-  const encoded = encodeURIComponent(url);
-  const src = `https://chart.googleapis.com/chart?cht=qr&chs=${size}x${size}&chl=${encoded}&choe=UTF-8&chld=H|1`;
   return (
-    <img
-      src={src}
-      alt="QR code to visit Divine Collection"
-      width={size}
-      height={size}
-      style={{ imageRendering: "pixelated" }}
+    <QRCodeSVG
+      value={url}
+      size={size}
+      level="H"
+      bgColor="#ffffff"
+      fgColor="#1a1a1a"
     />
   );
 }

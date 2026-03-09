@@ -9,13 +9,41 @@ function excludeSarees(products: Product[]): Product[] {
   return products.filter((p) => !p.name.toLowerCase().includes("saree"));
 }
 
+/**
+ * Renames products to numbered names (Suit 1, Suit 2, Kurti 1, Coord 1, etc.)
+ * grouped by category, in ascending ID order, so names are always consistent.
+ */
+function renumberProducts(products: Product[]): Product[] {
+  const byCategory: Record<string, Product[]> = {};
+  for (const p of products) {
+    const key = String(p.category);
+    if (!byCategory[key]) byCategory[key] = [];
+    byCategory[key].push(p);
+  }
+  // Sort each category by ID ascending for stable numbering
+  for (const key of Object.keys(byCategory)) {
+    byCategory[key].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  }
+  const categoryLabel: Record<string, string> = {
+    [String(Category.Kurties)]: "Suit",
+    [String(Category.Sarees)]: "Kurti",
+    [String(Category.CoordSets)]: "Coord",
+  };
+  return products.map((p) => {
+    const key = String(p.category);
+    const label = categoryLabel[key] ?? "Product";
+    const idx = byCategory[key].findIndex((x) => x.id === p.id);
+    return { ...p, name: `${label} ${idx + 1}` };
+  });
+}
+
 export function useAllProducts() {
   const { actor, isFetching } = useActor();
   return useQuery<Product[]>({
     queryKey: ["products", "all"],
     queryFn: async () => {
       if (!actor) return [];
-      return excludeSarees(await actor.getAllProducts());
+      return renumberProducts(excludeSarees(await actor.getAllProducts()));
     },
     enabled: !!actor && !isFetching,
   });
@@ -27,7 +55,7 @@ export function useFeaturedProducts() {
     queryKey: ["products", "featured"],
     queryFn: async () => {
       if (!actor) return [];
-      return excludeSarees(await actor.getFeaturedProducts());
+      return renumberProducts(excludeSarees(await actor.getFeaturedProducts()));
     },
     enabled: !!actor && !isFetching,
   });
@@ -39,7 +67,9 @@ export function useProductsByCategory(category: Category) {
     queryKey: ["products", "category", category],
     queryFn: async () => {
       if (!actor) return [];
-      return excludeSarees(await actor.getProductsByCategory(category));
+      return renumberProducts(
+        excludeSarees(await actor.getProductsByCategory(category)),
+      );
     },
     enabled: !!actor && !isFetching,
   });
