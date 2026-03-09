@@ -13,7 +13,7 @@ import { ProductCard } from "./ProductCard";
 const FALLBACK_FEATURED: Product[] = [
   {
     id: BigInt(21),
-    name: "Kurti Set 1",
+    name: "Kurti 1",
     description:
       "A beautifully crafted Indian kurti set, perfect for casual and festive occasions.",
     isFeatured: true,
@@ -22,7 +22,7 @@ const FALLBACK_FEATURED: Product[] = [
   },
   {
     id: BigInt(4),
-    name: "Coord Set",
+    name: "Coord 1",
     description:
       "A stunning coordinated top-and-bottom set blending traditional craftsmanship with a contemporary silhouette.",
     isFeatured: true,
@@ -31,7 +31,7 @@ const FALLBACK_FEATURED: Product[] = [
   },
   {
     id: BigInt(7),
-    name: "Suit Set 1",
+    name: "Suit 1",
     description:
       "A classic Indian suit set with intricate detailing, complete with matching dupatta — perfect for all occasions.",
     isFeatured: true,

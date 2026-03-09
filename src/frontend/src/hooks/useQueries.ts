@@ -4,13 +4,18 @@ import { useActor } from "./useActor";
 
 export type { Product, Category };
 
+/** Filter predicate: removes any legacy backend products whose name contains "saree". */
+function excludeSarees(products: Product[]): Product[] {
+  return products.filter((p) => !p.name.toLowerCase().includes("saree"));
+}
+
 export function useAllProducts() {
   const { actor, isFetching } = useActor();
   return useQuery<Product[]>({
     queryKey: ["products", "all"],
     queryFn: async () => {
       if (!actor) return [];
-      return actor.getAllProducts();
+      return excludeSarees(await actor.getAllProducts());
     },
     enabled: !!actor && !isFetching,
   });
@@ -22,7 +27,7 @@ export function useFeaturedProducts() {
     queryKey: ["products", "featured"],
     queryFn: async () => {
       if (!actor) return [];
-      return actor.getFeaturedProducts();
+      return excludeSarees(await actor.getFeaturedProducts());
     },
     enabled: !!actor && !isFetching,
   });
@@ -34,7 +39,7 @@ export function useProductsByCategory(category: Category) {
     queryKey: ["products", "category", category],
     queryFn: async () => {
       if (!actor) return [];
-      return actor.getProductsByCategory(category);
+      return excludeSarees(await actor.getProductsByCategory(category));
     },
     enabled: !!actor && !isFetching,
   });

@@ -14,7 +14,7 @@ const FALLBACK_PRODUCTS: Product[] = [
   // ── Kurti Sets ──────────────────────────────────────────────────────────────
   {
     id: BigInt(21),
-    name: "Kurti Set 1",
+    name: "Kurti 1",
     description:
       "A beautifully crafted Indian kurti set, perfect for casual and festive occasions.",
     isFeatured: true,
@@ -23,7 +23,7 @@ const FALLBACK_PRODUCTS: Product[] = [
   },
   {
     id: BigInt(22),
-    name: "Kurti Set 2",
+    name: "Kurti 2",
     description:
       "An elegant kurti set featuring traditional Indian prints and comfortable everyday styling.",
     isFeatured: false,
@@ -32,7 +32,7 @@ const FALLBACK_PRODUCTS: Product[] = [
   },
   {
     id: BigInt(23),
-    name: "Kurti Set 3",
+    name: "Kurti 3",
     description:
       "A vibrant kurti set with coordinated bottoms, ideal for both casual wear and light festivities.",
     isFeatured: false,
@@ -42,17 +42,17 @@ const FALLBACK_PRODUCTS: Product[] = [
   // ── Coord Sets ──────────────────────────────────────────────────────────────
   {
     id: BigInt(4),
-    name: "Coord Set",
+    name: "Coord 1",
     description:
       "A stunning coordinated top-and-bottom set blending traditional craftsmanship with a contemporary silhouette.",
     isFeatured: true,
     category: Category.CoordSets,
     price: BigInt(0),
   },
-  // ── Suite Sets ──────────────────────────────────────────────────────────────
+  // ── Suit Sets ──────────────────────────────────────────────────────────────
   {
     id: BigInt(7),
-    name: "Suit Set 1",
+    name: "Suit 1",
     description:
       "A classic Indian suit set with intricate detailing, complete with matching dupatta — perfect for all occasions.",
     isFeatured: true,
@@ -61,7 +61,7 @@ const FALLBACK_PRODUCTS: Product[] = [
   },
   {
     id: BigInt(8),
-    name: "Suit Set 2",
+    name: "Suit 2",
     description:
       "A vibrant and stylish Indian suit set with bold prints and a matching dupatta.",
     isFeatured: false,
@@ -70,7 +70,7 @@ const FALLBACK_PRODUCTS: Product[] = [
   },
   {
     id: BigInt(9),
-    name: "Suit Set 3",
+    name: "Suit 3",
     description:
       "An elegantly designed suit set with traditional embellishments and a graceful silhouette.",
     isFeatured: false,
@@ -79,7 +79,7 @@ const FALLBACK_PRODUCTS: Product[] = [
   },
   {
     id: BigInt(16),
-    name: "Suit Set 4",
+    name: "Suit 4",
     description:
       "A beautifully crafted suit set featuring traditional Indian textile artistry and vibrant hues.",
     isFeatured: false,
@@ -88,7 +88,7 @@ const FALLBACK_PRODUCTS: Product[] = [
   },
   {
     id: BigInt(17),
-    name: "Suit Set 5",
+    name: "Suit 5",
     description:
       "A rich and festive suit set with artistic prints and coordinated dupatta, ideal for celebrations.",
     isFeatured: false,
@@ -97,7 +97,7 @@ const FALLBACK_PRODUCTS: Product[] = [
   },
   {
     id: BigInt(18),
-    name: "Suit Set 6",
+    name: "Suit 6",
     description:
       "A stunning suit set adorned with traditional Indian motifs, crafted for both everyday and festive wear.",
     isFeatured: true,
