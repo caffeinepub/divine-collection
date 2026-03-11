@@ -173,7 +173,7 @@ export function useInitBackend() {
 // Suite Sets (Category.Kurties) — 8 uploaded photos, one per product ID
 const SUIT_IMAGE_BY_ID: Record<string, string> = {
   "7": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-1--1.jpeg",
-  "8": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.48-PM-2.jpeg",
+  "8": "/assets/uploads/ChatGPT-Image-Mar-11-2026-05_41_46-PM-1.png",
   "9": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.47-PM-1--3.jpeg",
   "16": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.47-PM-4.jpeg",
   "17": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-2--5.jpeg",
