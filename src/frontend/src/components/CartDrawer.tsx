@@ -15,10 +15,21 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Category } from "../backend.d";
 import { useCart } from "../hooks/useCart";
 import { formatPrice } from "../hooks/useQueries";
 
 const WHATSAPP_NUMBER = "917290016528";
+
+const CATEGORY_LABELS: Record<string, string> = {
+  [Category.Kurties]: "Suit Set",
+  [Category.Sarees]: "Kurti Set",
+  [Category.CoordSets]: "Co-ord Set",
+};
+
+function getCategoryLabel(cat: string): string {
+  return CATEGORY_LABELS[cat] ?? cat;
+}
 
 interface CustomerDetails {
   name: string;
@@ -81,9 +92,13 @@ export function CartDrawer() {
     return `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
   };
 
+  const goToDetails = () => {
+    setStep("details");
+  };
+
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop - lower z-index so drawer buttons always win */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -91,13 +106,13 @@ export function CartDrawer() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 bg-charcoal/50 backdrop-blur-sm"
+            className="fixed inset-0 z-40 bg-charcoal/50 backdrop-blur-sm"
             onClick={handleClose}
           />
         )}
       </AnimatePresence>
 
-      {/* Drawer */}
+      {/* Drawer - z-50 ensures it sits above the backdrop */}
       <AnimatePresence>
         {isOpen && (
           <motion.aside
@@ -106,10 +121,16 @@ export function CartDrawer() {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-md bg-card shadow-2xl flex flex-col"
+            onTouchStart={(e) => e.stopPropagation()}
+            className="fixed right-0 top-0 z-50 w-full max-w-md bg-card shadow-2xl flex flex-col"
+            style={{
+              bottom: 0,
+              height: "100%",
+              maxHeight: "-webkit-fill-available",
+            }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-5 border-b border-border">
+            <div className="flex items-center justify-between p-5 border-b border-border flex-shrink-0">
               <div className="flex items-center gap-3">
                 {step === "details" && (
                   <button
@@ -171,7 +192,7 @@ export function CartDrawer() {
                 </div>
               ) : (
                 <>
-                  <ScrollArea className="flex-1 px-5">
+                  <ScrollArea className="flex-1 px-5 min-h-0">
                     <div className="py-4 space-y-4">
                       {items.map((item, idx) => (
                         <motion.div
@@ -196,7 +217,7 @@ export function CartDrawer() {
                               {item.product.name}
                             </p>
                             <p className="text-muted-foreground text-xs mb-1 capitalize">
-                              {item.product.category}
+                              {getCategoryLabel(item.product.category)}
                             </p>
                             <p className="text-xs font-medium text-primary mb-2">
                               Size: {item.size}
@@ -250,7 +271,13 @@ export function CartDrawer() {
                     </div>
                   </ScrollArea>
 
-                  <div className="p-5 border-t border-border space-y-4">
+                  <div
+                    className="flex-shrink-0 p-5 border-t border-border space-y-4 bg-card"
+                    style={{
+                      paddingBottom:
+                        "max(20px, env(safe-area-inset-bottom, 20px))",
+                    }}
+                  >
                     <div className="flex items-center justify-between text-sm text-muted-foreground">
                       <span>Subtotal ({totalItems} items)</span>
                       <span className="font-display font-bold text-foreground text-lg">
@@ -260,28 +287,38 @@ export function CartDrawer() {
                     <p className="text-xs text-muted-foreground">
                       Shipping & taxes calculated at checkout
                     </p>
-                    <Button
+                    <button
+                      type="button"
                       data-ocid="cart.checkout_button"
-                      onClick={() => setStep("details")}
-                      className="w-full gold-gradient text-charcoal font-bold rounded-none py-6 text-base hover:opacity-90 transition-opacity"
+                      onClick={goToDetails}
+                      onTouchEnd={(e) => {
+                        e.stopPropagation();
+                        goToDetails();
+                      }}
+                      style={{
+                        touchAction: "manipulation",
+                        WebkitTapHighlightColor: "transparent",
+                      }}
+                      className="w-full gold-gradient text-charcoal font-bold py-4 text-base hover:opacity-90 transition-opacity block text-center cursor-pointer"
                     >
                       Proceed to Checkout
-                    </Button>
-                    <Button
-                      variant="ghost"
+                    </button>
+                    <button
+                      type="button"
                       onClick={handleClose}
-                      className="w-full text-muted-foreground hover:text-foreground rounded-none"
+                      style={{ touchAction: "manipulation" }}
+                      className="w-full text-muted-foreground hover:text-foreground py-2 text-sm transition-colors block text-center"
                     >
                       Continue Shopping
-                    </Button>
+                    </button>
                   </div>
                 </>
               ))}
 
             {/* ---- STEP: CUSTOMER DETAILS ---- */}
             {step === "details" && (
-              <div className="flex flex-col flex-1 overflow-hidden">
-                <ScrollArea className="flex-1 px-5 py-6">
+              <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <ScrollArea className="flex-1 px-5 py-6 min-h-0">
                   <p className="text-sm text-muted-foreground mb-6">
                     Please fill in your details so we can process your order via
                     WhatsApp.
@@ -433,13 +470,13 @@ export function CartDrawer() {
                   </div>
                 </ScrollArea>
 
-                <div className="p-5 border-t border-border space-y-3">
-                  {/*
-                    iOS Safari fix: render as a real <a> tag with href always set.
-                    iOS trusts native anchor taps unconditionally; JS-initiated
-                    navigation (window.open / window.location.href) can be blocked.
-                    If validation fails, we preventDefault to stop navigation.
-                  */}
+                <div
+                  className="flex-shrink-0 p-5 border-t border-border space-y-3 bg-card"
+                  style={{
+                    paddingBottom:
+                      "max(20px, env(safe-area-inset-bottom, 20px))",
+                  }}
+                >
                   <a
                     data-ocid="cart.whatsapp_submit_button"
                     href={buildWhatsAppUrl()}
@@ -464,13 +501,14 @@ export function CartDrawer() {
                     <MessageCircle className="h-5 w-5" />
                     Send Order on WhatsApp
                   </a>
-                  <Button
-                    variant="ghost"
+                  <button
+                    type="button"
                     onClick={() => setStep("cart")}
-                    className="w-full text-muted-foreground hover:text-foreground rounded-none"
+                    style={{ touchAction: "manipulation" }}
+                    className="w-full text-muted-foreground hover:text-foreground py-2 text-sm transition-colors block text-center"
                   >
                     Back to Cart
-                  </Button>
+                  </button>
                 </div>
               </div>
             )}
