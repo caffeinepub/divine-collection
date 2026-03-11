@@ -68,9 +68,7 @@ export function CartDrawer() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSendOrder = () => {
-    if (!validate()) return;
-
+  const buildWhatsAppUrl = (): string => {
     const itemLines = items
       .map(
         (item) =>
@@ -78,16 +76,9 @@ export function CartDrawer() {
       )
       .join("%0A");
 
-    const message = `*New Order - Divine Collection*%0A%0A*Customer Details*%0AName: ${details.name.trim()}%0AMobile: ${details.mobile.trim()}%0AAddress: ${details.address.trim()}%0A%0A*Order Summary*%0A${itemLines}%0A%0A*Total: ${formatPrice(totalPrice)}*`;
+    const message = `*New Order - Divine Collection*%0A%0A*Customer Details*%0AName: ${encodeURIComponent(details.name.trim())}%0AMobile: ${encodeURIComponent(details.mobile.trim())}%0AAddress: ${encodeURIComponent(details.address.trim())}%0A%0A*Order Summary*%0A${itemLines}%0A%0A*Total: ${formatPrice(totalPrice)}*`;
 
-    const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
-    window.open(waUrl, "_blank", "noopener,noreferrer");
-
-    clearCart();
-    handleClose();
-    toast.success("Order sent via WhatsApp! We'll confirm shortly.", {
-      duration: 5000,
-    });
+    return `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
   };
 
   return (
@@ -443,14 +434,36 @@ export function CartDrawer() {
                 </ScrollArea>
 
                 <div className="p-5 border-t border-border space-y-3">
-                  <Button
+                  {/*
+                    iOS Safari fix: render as a real <a> tag with href always set.
+                    iOS trusts native anchor taps unconditionally; JS-initiated
+                    navigation (window.open / window.location.href) can be blocked.
+                    If validation fails, we preventDefault to stop navigation.
+                  */}
+                  <a
                     data-ocid="cart.whatsapp_submit_button"
-                    onClick={handleSendOrder}
-                    className="w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white font-bold rounded-none py-6 text-base transition-colors flex items-center justify-center gap-2"
+                    href={buildWhatsAppUrl()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => {
+                      if (!validate()) {
+                        e.preventDefault();
+                        return;
+                      }
+                      setTimeout(() => {
+                        clearCart();
+                        handleClose();
+                        toast.success(
+                          "Order sent via WhatsApp! We'll confirm shortly.",
+                          { duration: 5000 },
+                        );
+                      }, 500);
+                    }}
+                    className="w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white font-bold py-4 text-base transition-colors flex items-center justify-center gap-2 cursor-pointer select-none no-underline"
                   >
                     <MessageCircle className="h-5 w-5" />
                     Send Order on WhatsApp
-                  </Button>
+                  </a>
                   <Button
                     variant="ghost"
                     onClick={() => setStep("cart")}
