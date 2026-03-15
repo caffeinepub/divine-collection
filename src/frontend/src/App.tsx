@@ -11,10 +11,14 @@ import { Navbar } from "./components/Navbar";
 import { ShopSection } from "./components/ShopSection";
 import { CartProvider } from "./hooks/useCart";
 import { useInitBackend } from "./hooks/useQueries";
+import { AdminPage } from "./pages/AdminPage";
 import { CollectionPageContent } from "./pages/CollectionPage";
 
-// ── Route types ──────────────────────────────────────────────────────────────
-type Route = { page: "home" } | { page: "collection"; category: Category };
+// ── Route types ────────────────────────────────────────────────────────────────
+type Route =
+  | { page: "home" }
+  | { page: "collection"; category: Category }
+  | { page: "admin" };
 
 const SLUG_TO_CATEGORY: Record<string, Category> = {
   "suit-sets": Category.Kurties,
@@ -30,6 +34,7 @@ const CATEGORY_TO_SLUG: Record<Category, string> = {
 
 function resolveRoute(): Route {
   const path = window.location.pathname;
+  if (path.startsWith("/admin")) return { page: "admin" };
   const match = path.match(/^\/collections\/([^/]+)/);
   if (match) {
     const category = SLUG_TO_CATEGORY[match[1]];
@@ -38,7 +43,7 @@ function resolveRoute(): Route {
   return { page: "home" };
 }
 
-// ── Home page content ────────────────────────────────────────────────────────
+// ── Home page content ───────────────────────────────────────────────────────────────
 function HomePage({
   onNavigateToCollection,
 }: {
@@ -119,6 +124,10 @@ function AppContent() {
       if (window.location.pathname !== "/") {
         window.history.pushState(null, "", "/");
       }
+    } else if (route.page === "admin") {
+      if (window.location.pathname !== "/admin") {
+        window.history.pushState(null, "", "/admin");
+      }
     } else {
       const slug = CATEGORY_TO_SLUG[route.category];
       const target = `/collections/${slug}`;
@@ -135,7 +144,7 @@ function AppContent() {
     return () => window.removeEventListener("popstate", handlePop);
   }, []);
 
-  // Scroll to top on route change — route is intentionally a dep here
+  // Scroll to top on route change
   // biome-ignore lint/correctness/useExhaustiveDependencies: route triggers scroll
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -151,13 +160,16 @@ function AppContent() {
   const navigateHome = useCallback((section?: string) => {
     setRoute({ page: "home" });
     if (section) {
-      // Defer scroll until home page mounts
       setTimeout(() => {
         const el = document.getElementById(section);
         if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 120);
     }
   }, []);
+
+  if (route.page === "admin") {
+    return <AdminPage />;
+  }
 
   if (route.page === "collection") {
     return (

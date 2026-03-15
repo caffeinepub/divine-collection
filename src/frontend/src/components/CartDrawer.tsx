@@ -13,9 +13,10 @@ import {
   X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Category } from "../backend.d";
+import { addSaleRecord } from "../hooks/useAdminData";
 import { useCart } from "../hooks/useCart";
 import { formatPrice } from "../hooks/useQueries";
 
@@ -39,6 +40,9 @@ interface CustomerDetails {
 
 type CheckoutStep = "cart" | "details";
 
+// Footer height constant (px) — used to add bottom padding to scroll areas
+const FOOTER_H = 160;
+
 export function CartDrawer() {
   const {
     items,
@@ -60,10 +64,16 @@ export function CartDrawer() {
   });
   const [errors, setErrors] = useState<Partial<CustomerDetails>>({});
 
+  // Reset step when drawer closes
+  useEffect(() => {
+    if (!isOpen) {
+      setStep("cart");
+      setErrors({});
+    }
+  }, [isOpen]);
+
   const handleClose = () => {
     closeCart();
-    setStep("cart");
-    setErrors({});
   };
 
   const validate = (): boolean => {
@@ -92,13 +102,41 @@ export function CartDrawer() {
     return `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
   };
 
-  const goToDetails = () => {
+  const handleProceedToCheckout = () => {
     setStep("details");
+  };
+
+  const handleSendWhatsApp = () => {
+    if (!validate()) return;
+
+    // Record the sale before navigating away
+    addSaleRecord({
+      customerName: details.name.trim(),
+      mobile: details.mobile.trim(),
+      address: details.address.trim(),
+      items: items.map((item) => ({
+        name: item.product.name,
+        size: item.size,
+        quantity: item.quantity,
+        price: Number(item.product.price),
+      })),
+      total: Number(totalPrice),
+    });
+
+    const url = buildWhatsAppUrl();
+    window.location.href = url;
+    setTimeout(() => {
+      clearCart();
+      handleClose();
+      toast.success("Order sent via WhatsApp! We\u2019ll confirm shortly.", {
+        duration: 5000,
+      });
+    }, 500);
   };
 
   return (
     <>
-      {/* Backdrop - lower z-index so drawer buttons always win */}
+      {/* Backdrop */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -112,7 +150,7 @@ export function CartDrawer() {
         )}
       </AnimatePresence>
 
-      {/* Drawer - z-50 ensures it sits above the backdrop */}
+      {/* Drawer panel — no onClick on the panel itself */}
       <AnimatePresence>
         {isOpen && (
           <motion.aside
@@ -121,7 +159,6 @@ export function CartDrawer() {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            onTouchStart={(e) => e.stopPropagation()}
             className="fixed right-0 top-0 z-50 w-full max-w-md bg-card shadow-2xl flex flex-col"
             style={{
               bottom: 0,
@@ -192,7 +229,11 @@ export function CartDrawer() {
                 </div>
               ) : (
                 <>
-                  <ScrollArea className="flex-1 px-5 min-h-0">
+                  {/* Scrollable cart items — padded so content clears the fixed footer */}
+                  <div
+                    className="flex-1 overflow-y-auto overscroll-contain -webkit-overflow-scrolling-touch px-5"
+                    style={{ paddingBottom: FOOTER_H }}
+                  >
                     <div className="py-4 space-y-4">
                       {items.map((item, idx) => (
                         <motion.div
@@ -269,13 +310,15 @@ export function CartDrawer() {
                         </motion.div>
                       ))}
                     </div>
-                  </ScrollArea>
+                  </div>
 
+                  {/* Cart footer — absolutely positioned to sit at the bottom of the drawer */}
                   <div
-                    className="flex-shrink-0 p-5 border-t border-border space-y-4 bg-card"
+                    className="absolute bottom-0 left-0 right-0 p-5 border-t border-border space-y-4 bg-card"
                     style={{
                       paddingBottom:
                         "max(20px, env(safe-area-inset-bottom, 20px))",
+                      zIndex: 10,
                     }}
                   >
                     <div className="flex items-center justify-between text-sm text-muted-foreground">
@@ -285,28 +328,27 @@ export function CartDrawer() {
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Shipping & taxes calculated at checkout
+                      Shipping &amp; taxes calculated at checkout
                     </p>
                     <button
                       type="button"
                       data-ocid="cart.checkout_button"
-                      onClick={goToDetails}
-                      onTouchEnd={(e) => {
-                        e.stopPropagation();
-                        goToDetails();
-                      }}
+                      onClick={handleProceedToCheckout}
                       style={{
                         touchAction: "manipulation",
                         WebkitTapHighlightColor: "transparent",
+                        cursor: "pointer",
+                        position: "relative",
+                        zIndex: 20,
                       }}
-                      className="w-full gold-gradient text-charcoal font-bold py-4 text-base hover:opacity-90 transition-opacity block text-center cursor-pointer"
+                      className="w-full gold-gradient text-charcoal font-bold py-4 text-base hover:opacity-90 transition-opacity block text-center"
                     >
                       Proceed to Checkout
                     </button>
                     <button
                       type="button"
                       onClick={handleClose}
-                      style={{ touchAction: "manipulation" }}
+                      style={{ touchAction: "manipulation", cursor: "pointer" }}
                       className="w-full text-muted-foreground hover:text-foreground py-2 text-sm transition-colors block text-center"
                     >
                       Continue Shopping
@@ -318,7 +360,11 @@ export function CartDrawer() {
             {/* ---- STEP: CUSTOMER DETAILS ---- */}
             {step === "details" && (
               <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
-                <ScrollArea className="flex-1 px-5 py-6 min-h-0">
+                {/* Scrollable form area — padded so content clears the fixed footer */}
+                <div
+                  className="flex-1 overflow-y-auto overscroll-contain px-5 py-6"
+                  style={{ paddingBottom: FOOTER_H }}
+                >
                   <p className="text-sm text-muted-foreground mb-6">
                     Please fill in your details so we can process your order via
                     WhatsApp.
@@ -447,10 +493,7 @@ export function CartDrawer() {
                             address: e.target.value,
                           }));
                           if (errors.address)
-                            setErrors((er) => ({
-                              ...er,
-                              address: undefined,
-                            }));
+                            setErrors((er) => ({ ...er, address: undefined }));
                         }}
                         className={`w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none ${
                           errors.address
@@ -468,43 +511,38 @@ export function CartDrawer() {
                       )}
                     </div>
                   </div>
-                </ScrollArea>
+                </div>
 
+                {/* Details footer — absolutely positioned */}
                 <div
-                  className="flex-shrink-0 p-5 border-t border-border space-y-3 bg-card"
+                  className="absolute bottom-0 left-0 right-0 p-5 border-t border-border space-y-3 bg-card"
                   style={{
                     paddingBottom:
                       "max(20px, env(safe-area-inset-bottom, 20px))",
+                    zIndex: 10,
                   }}
                 >
-                  <a
+                  {/* WhatsApp button as plain button — no anchor tag to avoid iOS link-tap quirks */}
+                  <button
+                    type="button"
                     data-ocid="cart.whatsapp_submit_button"
-                    href={buildWhatsAppUrl()}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => {
-                      if (!validate()) {
-                        e.preventDefault();
-                        return;
-                      }
-                      setTimeout(() => {
-                        clearCart();
-                        handleClose();
-                        toast.success(
-                          "Order sent via WhatsApp! We'll confirm shortly.",
-                          { duration: 5000 },
-                        );
-                      }, 500);
+                    onClick={handleSendWhatsApp}
+                    style={{
+                      touchAction: "manipulation",
+                      WebkitTapHighlightColor: "transparent",
+                      cursor: "pointer",
+                      position: "relative",
+                      zIndex: 20,
                     }}
-                    className="w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white font-bold py-4 text-base transition-colors flex items-center justify-center gap-2 cursor-pointer select-none no-underline"
+                    className="w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white font-bold py-4 text-base transition-colors flex items-center justify-center gap-2 select-none rounded-none"
                   >
                     <MessageCircle className="h-5 w-5" />
                     Send Order on WhatsApp
-                  </a>
+                  </button>
                   <button
                     type="button"
                     onClick={() => setStep("cart")}
-                    style={{ touchAction: "manipulation" }}
+                    style={{ touchAction: "manipulation", cursor: "pointer" }}
                     className="w-full text-muted-foreground hover:text-foreground py-2 text-sm transition-colors block text-center"
                   >
                     Back to Cart
