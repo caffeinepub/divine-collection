@@ -9,6 +9,7 @@ import { Footer } from "./components/Footer";
 import { HeroSection } from "./components/HeroSection";
 import { Navbar } from "./components/Navbar";
 import { ShopSection } from "./components/ShopSection";
+import { recordVisit } from "./hooks/useAdminData";
 import { CartProvider } from "./hooks/useCart";
 import { useInitBackend } from "./hooks/useQueries";
 import { AdminPage } from "./pages/AdminPage";
@@ -148,6 +149,23 @@ function AppContent() {
   // biome-ignore lint/correctness/useExhaustiveDependencies: route triggers scroll
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [route]);
+
+  // Record visit on route change (skip admin)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: route triggers visit recording
+  useEffect(() => {
+    if (route.page === "admin") return;
+    if (route.page === "home") {
+      recordVisit("Home");
+    } else if (route.page === "collection") {
+      if (route.category === Category.Kurties) {
+        recordVisit("Suit Sets");
+      } else if (route.category === Category.Sarees) {
+        recordVisit("Kurti Sets");
+      } else if (route.category === Category.CoordSets) {
+        recordVisit("Co-ord Sets");
+      }
+    }
   }, [route]);
 
   const navigateToCollection = useCallback((slug: string) => {

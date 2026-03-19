@@ -16,7 +16,8 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Category } from "../backend.d";
-import { addSaleRecord } from "../hooks/useAdminData";
+import { useActor } from "../hooks/useActor";
+
 import { useCart } from "../hooks/useCart";
 import { formatPrice } from "../hooks/useQueries";
 
@@ -55,6 +56,8 @@ export function CartDrawer() {
     removeItem,
     clearCart,
   } = useCart();
+
+  const { actor } = useActor();
 
   const [step, setStep] = useState<CheckoutStep>("cart");
   const [details, setDetails] = useState<CustomerDetails>({
@@ -109,19 +112,43 @@ export function CartDrawer() {
   const handleSendWhatsApp = () => {
     if (!validate()) return;
 
-    // Record the sale before navigating away
-    addSaleRecord({
-      customerName: details.name.trim(),
-      mobile: details.mobile.trim(),
-      address: details.address.trim(),
-      items: items.map((item) => ({
-        name: item.product.name,
-        size: item.size,
-        quantity: item.quantity,
-        price: Number(item.product.price),
-      })),
-      total: Number(totalPrice),
-    });
+    // Record the sale in the backend (fire-and-forget)
+    const saleItems = items.map((item) => ({
+      productId: item.product.id.toString(),
+      productName: item.product.name,
+      size: item.size,
+      quantity: BigInt(item.quantity),
+      price: item.product.price,
+    }));
+
+    // Save to backend
+    if (actor) {
+      // addSale
+      actor
+        .addSale(
+          details.name.trim(),
+          details.mobile.trim(),
+          details.address.trim(),
+          saleItems,
+          totalPrice,
+        )
+        .catch(() => {
+          // fire-and-forget
+        });
+
+      // Deduct stock for each item
+      for (const item of items) {
+        actor
+          .deductStock(
+            item.product.id.toString(),
+            item.size,
+            BigInt(item.quantity),
+          )
+          .catch(() => {
+            // fire-and-forget
+          });
+      }
+    }
 
     const url = buildWhatsAppUrl();
     window.location.href = url;

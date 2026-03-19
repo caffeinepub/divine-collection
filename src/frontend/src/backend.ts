@@ -89,14 +89,6 @@ export class ExternalBlob {
         return this;
     }
 }
-export type ProductId = bigint;
-export type Time = bigint;
-export interface ContactMessage {
-    name: string;
-    email: string;
-    message: string;
-    timestamp: Time;
-}
 export interface Product {
     id: ProductId;
     name: string;
@@ -105,23 +97,102 @@ export interface Product {
     category: Category;
     price: bigint;
 }
+export interface VisitRecord {
+    page: string;
+    timestamp: Timestamp;
+}
+export type Timestamp = bigint;
+export interface ContactMessage {
+    name: string;
+    email: string;
+    message: string;
+    timestamp: Timestamp;
+}
+export interface CostPriceEntry {
+    productId: string;
+    costPrice: number;
+}
+export type SaleId = bigint;
+export type ProductId = bigint;
+export interface Sale {
+    id: SaleId;
+    customerName: string;
+    total: bigint;
+    date: Timestamp;
+    address: string;
+    mobile: string;
+    items: Array<SaleItem>;
+}
+export interface SaleItem {
+    size: string;
+    productId: string;
+    productName: string;
+    quantity: bigint;
+    price: bigint;
+}
+export interface StockEntry {
+    size: string;
+    productId: string;
+    productName: string;
+    quantity: bigint;
+    category: string;
+}
 export enum Category {
     Sarees = "Sarees",
     CoordSets = "CoordSets",
     Kurties = "Kurties"
 }
 export interface backendInterface {
+    addSale(customerName: string, mobile: string, address: string, items: Array<SaleItem>, total: bigint): Promise<void>;
+    deductStock(productId: string, size: string, amount: bigint): Promise<void>;
     getAllContactMessages(): Promise<Array<ContactMessage>>;
     getAllProducts(): Promise<Array<Product>>;
+    getAllSales(): Promise<Array<Sale>>;
+    getAnalytics(): Promise<Array<VisitRecord>>;
+    getCostPrices(): Promise<Array<CostPriceEntry>>;
     getFeaturedProducts(): Promise<Array<Product>>;
     getProductById(id: ProductId): Promise<Product>;
     getProductsByCategory(category: Category): Promise<Array<Product>>;
+    getStock(): Promise<Array<StockEntry>>;
     init(): Promise<void>;
+    initStock(entries: Array<StockEntry>): Promise<void>;
+    recordVisit(page: string): Promise<void>;
+    resetAllStock(): Promise<void>;
+    setCostPrice(productId: string, costPrice: number): Promise<void>;
+    setStockEntry(productId: string, productName: string, category: string, size: string, quantity: bigint): Promise<void>;
     submitContactMessage(name: string, email: string, message: string): Promise<void>;
 }
 import type { Category as _Category, Product as _Product, ProductId as _ProductId } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
+    async addSale(arg0: string, arg1: string, arg2: string, arg3: Array<SaleItem>, arg4: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.addSale(arg0, arg1, arg2, arg3, arg4);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.addSale(arg0, arg1, arg2, arg3, arg4);
+            return result;
+        }
+    }
+    async deductStock(arg0: string, arg1: string, arg2: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deductStock(arg0, arg1, arg2);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deductStock(arg0, arg1, arg2);
+            return result;
+        }
+    }
     async getAllContactMessages(): Promise<Array<ContactMessage>> {
         if (this.processError) {
             try {
@@ -148,6 +219,48 @@ export class Backend implements backendInterface {
         } else {
             const result = await this.actor.getAllProducts();
             return from_candid_vec_n1(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getAllSales(): Promise<Array<Sale>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllSales();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllSales();
+            return result;
+        }
+    }
+    async getAnalytics(): Promise<Array<VisitRecord>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAnalytics();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAnalytics();
+            return result;
+        }
+    }
+    async getCostPrices(): Promise<Array<CostPriceEntry>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getCostPrices();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getCostPrices();
+            return result;
         }
     }
     async getFeaturedProducts(): Promise<Array<Product>> {
@@ -192,6 +305,20 @@ export class Backend implements backendInterface {
             return from_candid_vec_n1(this._uploadFile, this._downloadFile, result);
         }
     }
+    async getStock(): Promise<Array<StockEntry>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getStock();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getStock();
+            return result;
+        }
+    }
     async init(): Promise<void> {
         if (this.processError) {
             try {
@@ -203,6 +330,76 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.init();
+            return result;
+        }
+    }
+    async initStock(arg0: Array<StockEntry>): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.initStock(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.initStock(arg0);
+            return result;
+        }
+    }
+    async recordVisit(arg0: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.recordVisit(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.recordVisit(arg0);
+            return result;
+        }
+    }
+    async resetAllStock(): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.resetAllStock();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.resetAllStock();
+            return result;
+        }
+    }
+    async setCostPrice(arg0: string, arg1: number): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.setCostPrice(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.setCostPrice(arg0, arg1);
+            return result;
+        }
+    }
+    async setStockEntry(arg0: string, arg1: string, arg2: string, arg3: string, arg4: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.setStockEntry(arg0, arg1, arg2, arg3, arg4);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.setStockEntry(arg0, arg1, arg2, arg3, arg4);
             return result;
         }
     }

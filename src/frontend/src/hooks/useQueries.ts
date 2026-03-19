@@ -184,7 +184,7 @@ const SUIT_IMAGE_BY_ID: Record<string, string> = {
 
 // Kurti Sets (Category.Sarees repurposed) — 3 uploaded photos
 const KURTI_IMAGE_BY_ID: Record<string, string> = {
-  "21": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-1.jpeg",
+  "21": "/assets/uploads/ChatGPT-Image-Mar-17-2026-05_21_56-PM-1-1.png",
   "22": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.45-PM-2--2.jpeg",
   "23": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.45-PM-3--3.jpeg",
 };

@@ -8,12 +8,19 @@
 
 import { IDL } from '@icp-sdk/core/candid';
 
-export const Time = IDL.Int;
+export const SaleItem = IDL.Record({
+  'size' : IDL.Text,
+  'productId' : IDL.Text,
+  'productName' : IDL.Text,
+  'quantity' : IDL.Nat,
+  'price' : IDL.Nat,
+});
+export const Timestamp = IDL.Int;
 export const ContactMessage = IDL.Record({
   'name' : IDL.Text,
   'email' : IDL.Text,
   'message' : IDL.Text,
-  'timestamp' : Time,
+  'timestamp' : Timestamp,
 });
 export const ProductId = IDL.Nat;
 export const Category = IDL.Variant({
@@ -29,26 +36,77 @@ export const Product = IDL.Record({
   'category' : Category,
   'price' : IDL.Nat,
 });
+export const SaleId = IDL.Nat;
+export const Sale = IDL.Record({
+  'id' : SaleId,
+  'customerName' : IDL.Text,
+  'total' : IDL.Nat,
+  'date' : Timestamp,
+  'address' : IDL.Text,
+  'mobile' : IDL.Text,
+  'items' : IDL.Vec(SaleItem),
+});
+export const VisitRecord = IDL.Record({
+  'page' : IDL.Text,
+  'timestamp' : Timestamp,
+});
+export const CostPriceEntry = IDL.Record({
+  'productId' : IDL.Text,
+  'costPrice' : IDL.Float64,
+});
+export const StockEntry = IDL.Record({
+  'size' : IDL.Text,
+  'productId' : IDL.Text,
+  'productName' : IDL.Text,
+  'quantity' : IDL.Nat,
+  'category' : IDL.Text,
+});
 
 export const idlService = IDL.Service({
+  'addSale' : IDL.Func(
+      [IDL.Text, IDL.Text, IDL.Text, IDL.Vec(SaleItem), IDL.Nat],
+      [],
+      [],
+    ),
+  'deductStock' : IDL.Func([IDL.Text, IDL.Text, IDL.Nat], [], []),
   'getAllContactMessages' : IDL.Func([], [IDL.Vec(ContactMessage)], ['query']),
   'getAllProducts' : IDL.Func([], [IDL.Vec(Product)], ['query']),
+  'getAllSales' : IDL.Func([], [IDL.Vec(Sale)], ['query']),
+  'getAnalytics' : IDL.Func([], [IDL.Vec(VisitRecord)], ['query']),
+  'getCostPrices' : IDL.Func([], [IDL.Vec(CostPriceEntry)], ['query']),
   'getFeaturedProducts' : IDL.Func([], [IDL.Vec(Product)], ['query']),
   'getProductById' : IDL.Func([ProductId], [Product], ['query']),
   'getProductsByCategory' : IDL.Func([Category], [IDL.Vec(Product)], ['query']),
+  'getStock' : IDL.Func([], [IDL.Vec(StockEntry)], ['query']),
   'init' : IDL.Func([], [], []),
+  'initStock' : IDL.Func([IDL.Vec(StockEntry)], [], []),
+  'recordVisit' : IDL.Func([IDL.Text], [], []),
+  'resetAllStock' : IDL.Func([], [], []),
+  'setCostPrice' : IDL.Func([IDL.Text, IDL.Float64], [], []),
+  'setStockEntry' : IDL.Func(
+      [IDL.Text, IDL.Text, IDL.Text, IDL.Text, IDL.Nat],
+      [],
+      [],
+    ),
   'submitContactMessage' : IDL.Func([IDL.Text, IDL.Text, IDL.Text], [], []),
 });
 
 export const idlInitArgs = [];
 
 export const idlFactory = ({ IDL }) => {
-  const Time = IDL.Int;
+  const SaleItem = IDL.Record({
+    'size' : IDL.Text,
+    'productId' : IDL.Text,
+    'productName' : IDL.Text,
+    'quantity' : IDL.Nat,
+    'price' : IDL.Nat,
+  });
+  const Timestamp = IDL.Int;
   const ContactMessage = IDL.Record({
     'name' : IDL.Text,
     'email' : IDL.Text,
     'message' : IDL.Text,
-    'timestamp' : Time,
+    'timestamp' : Timestamp,
   });
   const ProductId = IDL.Nat;
   const Category = IDL.Variant({
@@ -64,14 +122,48 @@ export const idlFactory = ({ IDL }) => {
     'category' : Category,
     'price' : IDL.Nat,
   });
+  const SaleId = IDL.Nat;
+  const Sale = IDL.Record({
+    'id' : SaleId,
+    'customerName' : IDL.Text,
+    'total' : IDL.Nat,
+    'date' : Timestamp,
+    'address' : IDL.Text,
+    'mobile' : IDL.Text,
+    'items' : IDL.Vec(SaleItem),
+  });
+  const VisitRecord = IDL.Record({
+    'page' : IDL.Text,
+    'timestamp' : Timestamp,
+  });
+  const CostPriceEntry = IDL.Record({
+    'productId' : IDL.Text,
+    'costPrice' : IDL.Float64,
+  });
+  const StockEntry = IDL.Record({
+    'size' : IDL.Text,
+    'productId' : IDL.Text,
+    'productName' : IDL.Text,
+    'quantity' : IDL.Nat,
+    'category' : IDL.Text,
+  });
   
   return IDL.Service({
+    'addSale' : IDL.Func(
+        [IDL.Text, IDL.Text, IDL.Text, IDL.Vec(SaleItem), IDL.Nat],
+        [],
+        [],
+      ),
+    'deductStock' : IDL.Func([IDL.Text, IDL.Text, IDL.Nat], [], []),
     'getAllContactMessages' : IDL.Func(
         [],
         [IDL.Vec(ContactMessage)],
         ['query'],
       ),
     'getAllProducts' : IDL.Func([], [IDL.Vec(Product)], ['query']),
+    'getAllSales' : IDL.Func([], [IDL.Vec(Sale)], ['query']),
+    'getAnalytics' : IDL.Func([], [IDL.Vec(VisitRecord)], ['query']),
+    'getCostPrices' : IDL.Func([], [IDL.Vec(CostPriceEntry)], ['query']),
     'getFeaturedProducts' : IDL.Func([], [IDL.Vec(Product)], ['query']),
     'getProductById' : IDL.Func([ProductId], [Product], ['query']),
     'getProductsByCategory' : IDL.Func(
@@ -79,7 +171,17 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(Product)],
         ['query'],
       ),
+    'getStock' : IDL.Func([], [IDL.Vec(StockEntry)], ['query']),
     'init' : IDL.Func([], [], []),
+    'initStock' : IDL.Func([IDL.Vec(StockEntry)], [], []),
+    'recordVisit' : IDL.Func([IDL.Text], [], []),
+    'resetAllStock' : IDL.Func([], [], []),
+    'setCostPrice' : IDL.Func([IDL.Text, IDL.Float64], [], []),
+    'setStockEntry' : IDL.Func(
+        [IDL.Text, IDL.Text, IDL.Text, IDL.Text, IDL.Nat],
+        [],
+        [],
+      ),
     'submitContactMessage' : IDL.Func([IDL.Text, IDL.Text, IDL.Text], [], []),
   });
 };

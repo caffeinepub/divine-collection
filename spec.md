@@ -1,27 +1,30 @@
 # Divine Collection
 
 ## Current State
-Fully functional e-commerce site with frontend-driven product catalog (10 products: 6 Suit Sets, 3 Kurti Sets, 1 Co-ord Set), WhatsApp cart checkout, Instagram grid, QR code, size chart popup, and hover/quick-view effects. The admin dashboard and stock tracker have not yet been implemented.
+
+The site has an admin dashboard at `/admin` with Sales, Stock, Cost Prices, and Analytics tabs. All data (sales records, stock levels, cost prices, visit analytics) is stored in `localStorage` on the user's device. This causes two critical bugs:
+1. When a customer places an order on their phone, the sale is saved to the customer's localStorage -- the admin on a different device never sees it.
+2. When a sale is recorded, stock is never actually reduced.
 
 ## Requested Changes (Diff)
 
 ### Add
-- `/admin` route handled in App.tsx routing logic
-- `AdminPage.tsx` — password-protected admin dashboard with two tabs:
-  - **Sales tab**: table of all orders auto-captured at checkout, with columns: Date, Customer Name, Mobile, Address, Items (product name + size + qty), Total. A "Download CSV" button exports all sales.
-  - **Stock tab**: grid of all 10 products x 4 sizes (M, L, XL, XXL) with stock count per cell. Each cell shows current stock with +/- buttons to adjust. An "Initialize Stock" button sets all to 1.
-- `hooks/useAdminData.ts` — localStorage-based hooks for sales and stock data
-- Login screen with password `Divine@2024`, session stored in sessionStorage
+- Backend APIs for: recording a sale, fetching all sales, getting/setting stock, getting/setting cost prices, recording a visit, fetching analytics
+- Stock deduction logic: when an order is placed, for each item (product + size + quantity), reduce stock accordingly
+- Backend stores all sales, stock, cost prices, visit data so they are shared across all devices
 
 ### Modify
-- `CartDrawer.tsx` — after successful WhatsApp send, call addSaleRecord() to save order to localStorage before clearing cart
-- `App.tsx` — add `/admin` path detection to resolveRoute() and render AdminPage for that route
+- `useAdminData.ts`: replace all localStorage reads/writes with backend actor calls
+- `CartDrawer.tsx`: after recording the sale, also call backend to deduct stock for each ordered item
+- `AdminPage.tsx`: load data from backend instead of localStorage
+- Analytics tracking: send visit records to backend instead of localStorage
 
 ### Remove
-- Nothing
+- localStorage usage for sales, stock, cost prices, and visit analytics
 
 ## Implementation Plan
-1. Create `src/frontend/src/hooks/useAdminData.ts` with sale/stock data types and localStorage helpers
-2. Create `src/frontend/src/pages/AdminPage.tsx` with login screen, sales tab, stock tab
-3. Modify `CartDrawer.tsx` to call addSaleRecord on checkout
-4. Modify `App.tsx` to add admin route
+1. Update Motoko backend to add: SaleRecord type, StockEntry type, CostPrice type, VisitRecord type; stable storage vars for all; public APIs: addSale, getSales, getStock, setStockEntry, initStock, resetStock, getCostPrices, setCostPrice, recordVisit, getAnalytics
+2. Update `useAdminData.ts` to export async functions that call the backend actor
+3. Update `CartDrawer.tsx` to await addSale and deductStock after successful checkout
+4. Update `AdminPage.tsx` to fetch data from backend on mount
+5. Update visit tracking to call backend recordVisit

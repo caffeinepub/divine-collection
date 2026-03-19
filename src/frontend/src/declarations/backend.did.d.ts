@@ -17,8 +17,9 @@ export interface ContactMessage {
   'name' : string,
   'email' : string,
   'message' : string,
-  'timestamp' : Time,
+  'timestamp' : Timestamp,
 }
+export interface CostPriceEntry { 'productId' : string, 'costPrice' : number }
 export interface Product {
   'id' : ProductId,
   'name' : string,
@@ -28,14 +29,56 @@ export interface Product {
   'price' : bigint,
 }
 export type ProductId = bigint;
-export type Time = bigint;
+export interface Sale {
+  'id' : SaleId,
+  'customerName' : string,
+  'total' : bigint,
+  'date' : Timestamp,
+  'address' : string,
+  'mobile' : string,
+  'items' : Array<SaleItem>,
+}
+export type SaleId = bigint;
+export interface SaleItem {
+  'size' : string,
+  'productId' : string,
+  'productName' : string,
+  'quantity' : bigint,
+  'price' : bigint,
+}
+export interface StockEntry {
+  'size' : string,
+  'productId' : string,
+  'productName' : string,
+  'quantity' : bigint,
+  'category' : string,
+}
+export type Timestamp = bigint;
+export interface VisitRecord { 'page' : string, 'timestamp' : Timestamp }
 export interface _SERVICE {
+  'addSale' : ActorMethod<
+    [string, string, string, Array<SaleItem>, bigint],
+    undefined
+  >,
+  'deductStock' : ActorMethod<[string, string, bigint], undefined>,
   'getAllContactMessages' : ActorMethod<[], Array<ContactMessage>>,
   'getAllProducts' : ActorMethod<[], Array<Product>>,
+  'getAllSales' : ActorMethod<[], Array<Sale>>,
+  'getAnalytics' : ActorMethod<[], Array<VisitRecord>>,
+  'getCostPrices' : ActorMethod<[], Array<CostPriceEntry>>,
   'getFeaturedProducts' : ActorMethod<[], Array<Product>>,
   'getProductById' : ActorMethod<[ProductId], Product>,
   'getProductsByCategory' : ActorMethod<[Category], Array<Product>>,
+  'getStock' : ActorMethod<[], Array<StockEntry>>,
   'init' : ActorMethod<[], undefined>,
+  'initStock' : ActorMethod<[Array<StockEntry>], undefined>,
+  'recordVisit' : ActorMethod<[string], undefined>,
+  'resetAllStock' : ActorMethod<[], undefined>,
+  'setCostPrice' : ActorMethod<[string, number], undefined>,
+  'setStockEntry' : ActorMethod<
+    [string, string, string, string, bigint],
+    undefined
+  >,
   'submitContactMessage' : ActorMethod<[string, string, string], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;

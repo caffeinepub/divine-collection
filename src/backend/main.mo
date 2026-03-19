@@ -1,13 +1,22 @@
 import Map "mo:core/Map";
+import Nat "mo:core/Nat";
 import Runtime "mo:core/Runtime";
 import Time "mo:core/Time";
 import Array "mo:core/Array";
+import Int "mo:core/Int";
+import Float "mo:core/Float";
 import Order "mo:core/Order";
 import Iter "mo:core/Iter";
 import Text "mo:core/Text";
+import Migration "migration";
 
+(with migration = Migration.run)
 actor {
+  //----------------------------------------
+  // Type Definitions
+  //----------------------------------------
   type ProductId = Nat;
+  type Timestamp = Int;
 
   type Category = {
     #Sarees;
@@ -24,27 +33,57 @@ actor {
     isFeatured : Bool;
   };
 
-  module Product {
-    public func compareByName(p1 : Product, p2 : Product) : Order.Order {
-      Text.compare(p1.name, p2.name);
-    };
-  };
-
   type ContactMessage = {
     name : Text;
     email : Text;
     message : Text;
-    timestamp : Time.Time;
+    timestamp : Timestamp;
   };
 
+  type SaleId = Nat;
+  type SaleItem = {
+    productId : Text;
+    productName : Text;
+    size : Text;
+    quantity : Nat;
+    price : Nat;
+  };
+
+  type Sale = {
+    id : SaleId;
+    date : Timestamp;
+    customerName : Text;
+    mobile : Text;
+    address : Text;
+    items : [SaleItem];
+    total : Nat;
+  };
+
+  type StockEntry = {
+    productId : Text;
+    productName : Text;
+    category : Text;
+    size : Text;
+    quantity : Nat;
+  };
+
+  type CostPriceEntry = {
+    productId : Text;
+    costPrice : Float;
+  };
+
+  type VisitRecord = {
+    page : Text;
+    timestamp : Timestamp;
+  };
+
+  //----------------------------------------
+  // Product Management
+  //----------------------------------------
   let products = Map.empty<ProductId, Product>();
   var productIdCounter = 1;
 
-  let contactMessages = Map.empty<Nat, ContactMessage>();
-  var contactMessageIdCounter = 1;
-
   let initialProducts : [Product] = [
-    // Sarees
     {
       id = 1;
       name = "Banarasi Silk Saree";
@@ -69,6 +108,7 @@ actor {
       description = "Classic Kanjivaram pure silk saree in vibrant colors and motifs.";
       isFeatured = true;
     },
+
     // CoordSets
     {
       id = 4;
@@ -94,6 +134,7 @@ actor {
       description = "Festive occasionwear kurta and pant set with matching dupatta.";
       isFeatured = true;
     },
+
     // Kurties
     {
       id = 7;
@@ -120,6 +161,12 @@ actor {
       isFeatured = false;
     },
   ];
+
+  module Product {
+    public func compareByName(p1 : Product, p2 : Product) : Order.Order {
+      Text.compare(p1.name, p2.name);
+    };
+  };
 
   public shared ({ caller }) func init() : async () {
     if (products.size() == 0) {
@@ -153,6 +200,12 @@ actor {
     ).sort(Product.compareByName);
   };
 
+  //----------------------------------------
+  // Contact Messages
+  //----------------------------------------
+  var contactMessageIdCounter = 1;
+  let contactMessages = Map.empty<Nat, ContactMessage>();
+
   public shared ({ caller }) func submitContactMessage(name : Text, email : Text, message : Text) : async () {
     let contactMessage : ContactMessage = {
       name;
@@ -166,5 +219,123 @@ actor {
 
   public query ({ caller }) func getAllContactMessages() : async [ContactMessage] {
     contactMessages.values().toArray();
+  };
+
+  //----------------------------------------
+  // Sales, Stock & Analytics
+  //----------------------------------------
+  var saleIdCounter = 1;
+  let sales = Map.empty<SaleId, Sale>();
+  let stock = Map.empty<Text, StockEntry>();
+  let costPrices = Map.empty<Text, CostPriceEntry>();
+  let analytics = Map.empty<Nat, VisitRecord>();
+
+  //- Sales
+  public shared ({ caller }) func addSale(
+    customerName : Text,
+    mobile : Text,
+    address : Text,
+    items : [SaleItem],
+    total : Nat,
+  ) : async () {
+    let sale : Sale = {
+      id = saleIdCounter;
+      date = Time.now();
+      customerName;
+      mobile;
+      address;
+      items;
+      total;
+    };
+    sales.add(saleIdCounter, sale);
+    saleIdCounter += 1;
+  };
+
+  public query ({ caller }) func getAllSales() : async [Sale] {
+    sales.values().toArray();
+  };
+
+  //- Stock Management
+  func createStockKey(productId : Text, size : Text) : Text {
+    productId # ":" # size;
+  };
+
+  public query ({ caller }) func getStock() : async [StockEntry] {
+    stock.values().toArray();
+  };
+
+  public shared ({ caller }) func setStockEntry(productId : Text, productName : Text, category : Text, size : Text, quantity : Nat) : async () {
+    let entry : StockEntry = {
+      productId;
+      productName;
+      category;
+      size;
+      quantity;
+    };
+    stock.add(createStockKey(productId, size), entry);
+  };
+
+  public shared ({ caller }) func deductStock(productId : Text, size : Text, amount : Nat) : async () {
+    let key = createStockKey(productId, size);
+    let currentQuantity = switch (stock.get(key)) {
+      case (null) { 0 };
+      case (?entry) { entry.quantity };
+    };
+
+    let newQuantity = if (amount >= currentQuantity) { 0 } else { currentQuantity - amount };
+    let updatedEntry = switch (stock.get(key)) {
+      case (null) {
+        {
+          productId;
+          productName = "";
+          category = "";
+          size;
+          quantity = newQuantity;
+        };
+      };
+      case (?entry) {
+        { entry with quantity = newQuantity };
+      };
+    };
+    stock.add(key, updatedEntry);
+  };
+
+  public shared ({ caller }) func initStock(entries : [StockEntry]) : async () {
+    stock.clear();
+    for (entry in entries.values()) {
+      stock.add(createStockKey(entry.productId, entry.size), entry);
+    };
+  };
+
+  public shared ({ caller }) func resetAllStock() : async () {
+    stock.clear();
+  };
+
+  //- Cost Prices
+  public query ({ caller }) func getCostPrices() : async [CostPriceEntry] {
+    costPrices.values().toArray();
+  };
+
+  public shared ({ caller }) func setCostPrice(productId : Text, costPrice : Float) : async () {
+    let entry : CostPriceEntry = {
+      productId;
+      costPrice;
+    };
+    costPrices.add(productId, entry);
+  };
+
+  //- Analytics/Visits
+  var analyticsRecordIdCounter = 1;
+  public shared ({ caller }) func recordVisit(page : Text) : async () {
+    let record : VisitRecord = {
+      page;
+      timestamp = Time.now();
+    };
+    analytics.add(analyticsRecordIdCounter, record);
+    analyticsRecordIdCounter += 1;
+  };
+
+  public query ({ caller }) func getAnalytics() : async [VisitRecord] {
+    analytics.values().toArray();
   };
 };
