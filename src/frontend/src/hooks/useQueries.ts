@@ -145,12 +145,26 @@ export function useProductOverrides() {
   });
 }
 
+/**
+ * Only accept static /assets/uploads/ paths as image overrides.
+ * External URLs (blob storage, http/https) are rejected because they
+ * require a successful upload that may not have completed, causing
+ * broken images. Static paths are always reliable.
+ */
+function isValidImageUrl(url: string): boolean {
+  return url.startsWith("/assets/uploads/");
+}
+
 export function useImageOverrides(): Record<string, string> {
   const { data: overrides } = useProductOverrides();
   const map: Record<string, string> = {};
   if (overrides) {
     for (const o of overrides) {
-      if (o.imageUrl.length > 0 && o.imageUrl[0]) {
+      if (
+        o.imageUrl.length > 0 &&
+        o.imageUrl[0] &&
+        isValidImageUrl(o.imageUrl[0] as string)
+      ) {
         map[o.productId] = o.imageUrl[0] as string;
       }
     }
@@ -294,8 +308,6 @@ const SUIT_IMAGE_BY_ID: Record<string, string> = {
   "16": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.47-PM-4.jpeg",
   "17": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-2--5.jpeg",
   "18": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.47-PM-3--6.jpeg",
-  "19": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.47-PM-2--7.jpeg",
-  "20": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.51-PM-8.jpeg",
 };
 
 // Kurti Sets (Category.Sarees repurposed)
