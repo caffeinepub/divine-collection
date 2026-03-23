@@ -9,12 +9,16 @@ import { Footer } from "../components/Footer";
 import { ProductCard } from "../components/ProductCard";
 import { ProductQuickView } from "../components/ProductQuickView";
 import {
+  coord1Img,
   getProductImage,
+  kurtiHeroImg,
+  nightwear2Img,
+  suit1Img,
   useAllProducts,
   useImageOverrides,
 } from "../hooks/useQueries";
 
-// ── Per-collection metadata ────────────────────────────────────────────────────────────────
+// ── Per-collection metadata ──────────────────────────────────────────────────────────────────────────────
 const COLLECTION_META: Record<
   Category,
   {
@@ -30,7 +34,7 @@ const COLLECTION_META: Record<
     subtitle: "Everyday Ethnic Comfort",
     description:
       "Beautifully coordinated kurti and pant sets crafted for effortless everyday wear — featuring soft fabrics, delicate embroidery, and prints inspired by traditional Indian textile arts.",
-    heroImage: "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-1.jpeg",
+    heroImage: kurtiHeroImg,
     heroGradient:
       "linear-gradient(135deg, oklch(0.18 0.05 200 / 0.88) 0%, oklch(0.28 0.08 170 / 0.70) 100%)",
   },
@@ -39,8 +43,7 @@ const COLLECTION_META: Record<
     subtitle: "Effortless Ethnic Chic",
     description:
       "Perfectly coordinated top-and-bottom pairings that blend traditional craftsmanship with contemporary silhouettes — dressed up or down for any occasion.",
-    heroImage:
-      "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.45-PM-1--1.jpeg",
+    heroImage: coord1Img,
     heroGradient:
       "linear-gradient(135deg, oklch(0.18 0.05 60 / 0.88) 0%, oklch(0.30 0.10 80 / 0.70) 100%)",
   },
@@ -49,8 +52,7 @@ const COLLECTION_META: Record<
     subtitle: "Artisan Crafted Elegance",
     description:
       "From delicate chikankari to vibrant bandhani, our suit sets bring comfort and artistry to your wardrobe — each one handcrafted with care and adorned with traditional embellishments.",
-    heroImage:
-      "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-1--1.jpeg",
+    heroImage: suit1Img,
     heroGradient:
       "linear-gradient(135deg, oklch(0.18 0.06 25 / 0.88) 0%, oklch(0.28 0.08 45 / 0.70) 100%)",
   },
@@ -59,19 +61,19 @@ const COLLECTION_META: Record<
     subtitle: "Relax in Style",
     description:
       "Soft, breathable night wear sets designed for a restful night's sleep — combining comfort with style so you can unwind in elegance every evening.",
-    heroImage: "/assets/uploads/WhatsApp-Image-2026-03-22-at-7.50.49-PM-2.jpeg",
+    heroImage: nightwear2Img,
     heroGradient:
       "linear-gradient(135deg, oklch(0.18 0.05 270 / 0.88) 0%, oklch(0.28 0.06 240 / 0.70) 100%)",
   },
 };
 
-// ── Props ──────────────────────────────────────────────────────────────────────────
+// ── Props ──────────────────────────────────────────────────────────────────────────────────────
 export interface CollectionPageProps {
   category: Category;
   onNavigateHome: (section?: string) => void;
 }
 
-// ── Page content (no CartProvider — expects it from App.tsx) ─────────────────────────
+// ── Page content (no CartProvider — expects it from App.tsx) ───────────────────────────────────────
 export function CollectionPageContent({
   category,
   onNavigateHome,

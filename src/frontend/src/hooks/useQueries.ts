@@ -3,6 +3,25 @@ import { Category, type Product } from "../backend.d";
 import type { ProductOverride } from "../backend.d";
 import { useActor } from "./useActor";
 
+import suit2Img from "../assets/ChatGPT-Image-Mar-11-2026-05_41_46-PM-1.png";
+import kurti1Img from "../assets/ChatGPT-Image-Mar-17-2026-05_21_56-PM-1-1.png";
+import coord1Img from "../assets/WhatsApp-Image-2026-03-08-at-7.40.45-PM-1--1.jpeg";
+import kurti2Img from "../assets/WhatsApp-Image-2026-03-08-at-7.40.45-PM-2--2.jpeg";
+import kurti3Img from "../assets/WhatsApp-Image-2026-03-08-at-7.40.45-PM-3--3.jpeg";
+// ── Image imports (ES module imports ensure Vite bundles these assets) ─────────
+import suit1Img from "../assets/WhatsApp-Image-2026-03-08-at-7.40.46-PM-1--1.jpeg";
+import kurtiHeroImg from "../assets/WhatsApp-Image-2026-03-08-at-7.40.46-PM-1.jpeg";
+import suit5Img from "../assets/WhatsApp-Image-2026-03-08-at-7.40.46-PM-2--5.jpeg";
+import suit3Img from "../assets/WhatsApp-Image-2026-03-08-at-7.40.47-PM-1--3.jpeg";
+import suit6Img from "../assets/WhatsApp-Image-2026-03-08-at-7.40.47-PM-3--6.jpeg";
+import suit4Img from "../assets/WhatsApp-Image-2026-03-08-at-7.40.47-PM-4.jpeg";
+import sizeChartImg from "../assets/WhatsApp-Image-2026-03-09-at-10.34.16-PM-1.jpeg";
+import nightwear1Img from "../assets/WhatsApp-Image-2026-03-22-at-4.47.00-PM-1.jpeg";
+import nightwear2Img from "../assets/WhatsApp-Image-2026-03-22-at-7.50.49-PM-2.jpeg";
+
+// Export for use in other components
+export { suit1Img, coord1Img, kurtiHeroImg, nightwear2Img, sizeChartImg };
+
 // Extended actor type for product overrides
 interface ActorWithOverrides {
   getProductOverrides(): Promise<Array<ProductOverride>>;
@@ -145,31 +164,9 @@ export function useProductOverrides() {
   });
 }
 
-/**
- * Only accept static /assets/uploads/ paths as image overrides.
- * External URLs (blob storage, http/https) are rejected because they
- * require a successful upload that may not have completed, causing
- * broken images. Static paths are always reliable.
- */
-function isValidImageUrl(url: string): boolean {
-  return url.startsWith("/assets/uploads/");
-}
-
+// Image overrides are disabled -- all images are served from bundled assets
 export function useImageOverrides(): Record<string, string> {
-  const { data: overrides } = useProductOverrides();
-  const map: Record<string, string> = {};
-  if (overrides) {
-    for (const o of overrides) {
-      if (
-        o.imageUrl.length > 0 &&
-        o.imageUrl[0] &&
-        isValidImageUrl(o.imageUrl[0] as string)
-      ) {
-        map[o.productId] = o.imageUrl[0] as string;
-      }
-    }
-  }
-  return map;
+  return {};
 }
 
 /** Returns all products merged with any admin overrides for price and description. */
@@ -297,35 +294,30 @@ export function getSizesForCategory(
 }
 
 /**
- * Maps a product to its image path based on product ID.
+ * Maps a product to its bundled image (imported as ES module).
  */
-
-// Suit Sets (Category.Kurties)
 const SUIT_IMAGE_BY_ID: Record<string, string> = {
-  "7": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-1--1.jpeg",
-  "8": "/assets/uploads/ChatGPT-Image-Mar-11-2026-05_41_46-PM-1.png",
-  "9": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.47-PM-1--3.jpeg",
-  "16": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.47-PM-4.jpeg",
-  "17": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-2--5.jpeg",
-  "18": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.47-PM-3--6.jpeg",
+  "7": suit1Img,
+  "8": suit2Img,
+  "9": suit3Img,
+  "16": suit4Img,
+  "17": suit5Img,
+  "18": suit6Img,
 };
 
-// Kurti Sets (Category.Sarees repurposed)
 const KURTI_IMAGE_BY_ID: Record<string, string> = {
-  "21": "/assets/uploads/ChatGPT-Image-Mar-17-2026-05_21_56-PM-1-1.png",
-  "22": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.45-PM-2--2.jpeg",
-  "23": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.45-PM-3--3.jpeg",
+  "21": kurti1Img,
+  "22": kurti2Img,
+  "23": kurti3Img,
 };
 
-// Coord Sets (Category.CoordSets)
 const COORD_IMAGE_BY_ID: Record<string, string> = {
-  "4": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.45-PM-1--1.jpeg",
+  "4": coord1Img,
 };
 
-// Night Wear (Category.NightWear)
 const NIGHTWEAR_IMAGE_BY_ID: Record<string, string> = {
-  "30": "/assets/uploads/WhatsApp-Image-2026-03-22-at-4.47.00-PM-1.jpeg",
-  "31": "/assets/uploads/WhatsApp-Image-2026-03-22-at-7.50.49-PM-2.jpeg",
+  "30": nightwear1Img,
+  "31": nightwear2Img,
 };
 
 export function getProductImage(
@@ -335,27 +327,15 @@ export function getProductImage(
   const key = product.id.toString();
   switch (product.category) {
     case Category.Kurties:
-      return (
-        SUIT_IMAGE_BY_ID[key] ??
-        "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-1--1.jpeg"
-      );
+      return SUIT_IMAGE_BY_ID[key] ?? suit1Img;
     case Category.Sarees:
-      return (
-        KURTI_IMAGE_BY_ID[key] ??
-        "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-1.jpeg"
-      );
+      return KURTI_IMAGE_BY_ID[key] ?? kurtiHeroImg;
     case Category.CoordSets:
-      return (
-        COORD_IMAGE_BY_ID[key] ??
-        "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.45-PM-1--1.jpeg"
-      );
+      return COORD_IMAGE_BY_ID[key] ?? coord1Img;
     case Category.NightWear:
-      return (
-        NIGHTWEAR_IMAGE_BY_ID[key] ??
-        "/assets/uploads/WhatsApp-Image-2026-03-22-at-4.47.00-PM-1.jpeg"
-      );
+      return NIGHTWEAR_IMAGE_BY_ID[key] ?? nightwear1Img;
     default:
-      return "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-1--1.jpeg";
+      return suit1Img;
   }
 }
 
