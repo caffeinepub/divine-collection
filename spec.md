@@ -2,29 +2,37 @@
 
 ## Current State
 
-The site has an admin dashboard at `/admin` with Sales, Stock, Cost Prices, and Analytics tabs. All data (sales records, stock levels, cost prices, visit analytics) is stored in `localStorage` on the user's device. This causes two critical bugs:
-1. When a customer places an order on their phone, the sale is saved to the customer's localStorage -- the admin on a different device never sees it.
-2. When a sale is recorded, stock is never actually reduced.
+- E-commerce site for Indian traditional wear (Suit Sets, Kurti Sets, Co-ord Sets, Night Wear)
+- Product catalog is fully hardcoded in `useQueries.ts` (CATALOG_PRODUCTS + image maps)
+- Admin dashboard at `/admin` has tabs: Sales, Stock, Analytics, Cost Prices
+- All product changes (images, prices, descriptions) currently require a code rebuild
 
 ## Requested Changes (Diff)
 
 ### Add
-- Backend APIs for: recording a sale, fetching all sales, getting/setting stock, getting/setting cost prices, recording a visit, fetching analytics
-- Stock deduction logic: when an order is placed, for each item (product + size + quantity), reduce stock accordingly
-- Backend stores all sales, stock, cost prices, visit data so they are shared across all devices
+- `ProductOverride` backend type: `{ productId: Text; price: ?Nat; description: ?Text; imageUrl: ?Text; }`
+- Backend functions: `setProductOverride(productId, price, description, imageUrl)` and `getProductOverrides()` 
+- Blob-storage for admin to upload new product images
+- Admin dashboard "Products" tab: edit price, description, and image for each product
+- Frontend merges CATALOG_PRODUCTS with backend overrides at runtime (no rebuild needed)
 
 ### Modify
-- `useAdminData.ts`: replace all localStorage reads/writes with backend actor calls
-- `CartDrawer.tsx`: after recording the sale, also call backend to deduct stock for each ordered item
-- `AdminPage.tsx`: load data from backend instead of localStorage
-- Analytics tracking: send visit records to backend instead of localStorage
+- `useAllProducts()` — now fetches overrides from backend and merges: override price/description/imageUrl take precedence over static defaults
+- `getProductImage()` — checks override imageUrl first, falls back to static image map
+- `AdminPage` — adds new "Products" tab with editable product cards
 
 ### Remove
-- localStorage usage for sales, stock, cost prices, and visit analytics
+- Nothing removed
 
 ## Implementation Plan
-1. Update Motoko backend to add: SaleRecord type, StockEntry type, CostPrice type, VisitRecord type; stable storage vars for all; public APIs: addSale, getSales, getStock, setStockEntry, initStock, resetStock, getCostPrices, setCostPrice, recordVisit, getAnalytics
-2. Update `useAdminData.ts` to export async functions that call the backend actor
-3. Update `CartDrawer.tsx` to await addSale and deductStock after successful checkout
-4. Update `AdminPage.tsx` to fetch data from backend on mount
-5. Update visit tracking to call backend recordVisit
+
+1. Add `ProductOverride` type and stable storage map to `main.mo`
+2. Add `setProductOverride` and `getProductOverrides` functions to `main.mo`
+3. Update `backend.d.ts` with `ProductOverride` type and two new interface methods
+4. Select blob-storage component for image uploads
+5. Update `useQueries.ts`: add `useProductOverrides()` hook, update `useAllProducts()` to merge overrides, update `getProductImage()` to use override imageUrl
+6. Add "Products" tab to `AdminPage.tsx`:
+   - List all 12 products (all 4 categories)
+   - Each row/card: current image thumbnail, editable price field, editable description field, image upload button (via blob-storage)
+   - "Save" button calls `setProductOverride` on the backend
+7. On the customer-facing site, `useAllProducts()` returns products with override data applied transparently

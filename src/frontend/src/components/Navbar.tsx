@@ -23,6 +23,7 @@ const collections = [
   { label: "Suit Sets", slug: "suit-sets" },
   { label: "Kurti Sets", slug: "kurti-sets" },
   { label: "Co-ord Sets", slug: "coord-sets" },
+  { label: "Night Wear", slug: "night-wear" },
 ];
 
 export function Navbar({

@@ -1,7 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Category } from "../backend.d";
+import type { ProductOverride } from "../backend.d";
 import { useActor } from "./useActor";
 import { CATALOG_PRODUCTS } from "./useQueries";
+
+// Extended actor type that includes product override methods (from backend.d.ts)
+interface ActorWithOverrides {
+  setProductOverride(
+    productId: string,
+    price: [] | [bigint],
+    description: [] | [string],
+    imageUrl: [] | [string],
+  ): Promise<void>;
+  getProductOverrides(): Promise<Array<ProductOverride>>;
+}
 
 export const SIZES: Array<"M" | "L" | "XL" | "XXL"> = ["M", "L", "XL", "XXL"];
 
@@ -249,6 +261,37 @@ export function useSetCostPrice() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cost-prices"] });
+    },
+  });
+}
+
+// ── useSetProductOverride ─────────────────────────────────────────────────────
+
+export function useSetProductOverride() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      productId,
+      price,
+      description,
+      imageUrl,
+    }: {
+      productId: string;
+      price?: number;
+      description?: string;
+      imageUrl?: string;
+    }) => {
+      if (!actor) return;
+      await (actor as unknown as ActorWithOverrides).setProductOverride(
+        productId,
+        price !== undefined ? [BigInt(Math.round(price))] : [],
+        description !== undefined ? [description] : [],
+        imageUrl !== undefined ? [imageUrl] : [],
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["product-overrides"] });
     },
   });
 }

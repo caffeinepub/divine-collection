@@ -7,7 +7,12 @@ import type { Product } from "../backend.d";
 import { Category } from "../backend.d";
 import type { ProductSize } from "../hooks/useCart";
 import { useCart } from "../hooks/useCart";
-import { formatPrice } from "../hooks/useQueries";
+import {
+  formatPrice,
+  getSizesForCategory,
+  isSizeOutOfStock,
+  useStock,
+} from "../hooks/useQueries";
 import { SizeChartModal } from "./SizeChartModal";
 
 interface ProductQuickViewProps {
@@ -17,18 +22,18 @@ interface ProductQuickViewProps {
   onClose: () => void;
 }
 
-const SIZES: ProductSize[] = ["M", "L", "XL", "XXL"];
-
-const categoryColors: Record<Category, string> = {
+const categoryColors: Record<string, string> = {
   [Category.Sarees]: "bg-magenta/10 text-magenta border-magenta/30",
   [Category.CoordSets]: "bg-gold/10 text-gold-dark border-gold/30",
   [Category.Kurties]: "bg-crimson/10 text-crimson border-crimson/30",
+  [Category.NightWear]: "bg-indigo-100 text-indigo-700 border-indigo-200",
 };
 
-const categoryLabels: Record<Category, string> = {
+const categoryLabels: Record<string, string> = {
   [Category.Sarees]: "Kurti Set",
   [Category.CoordSets]: "Co-ord Set",
   [Category.Kurties]: "Suit",
+  [Category.NightWear]: "Night Wear",
 };
 
 export function ProductQuickView({
@@ -41,14 +46,16 @@ export function ProductQuickView({
   const [selectedSize, setSelectedSize] = useState<ProductSize | null>(null);
   const [showSizeError, setShowSizeError] = useState(false);
   const [showSizeChart, setShowSizeChart] = useState(false);
+  const { data: stockData } = useStock();
 
   if (!product) return null;
 
-  const categoryLabel =
-    categoryLabels[product.category as Category] ?? product.category;
+  const categoryLabel = categoryLabels[product.category] ?? product.category;
   const categoryColor =
-    categoryColors[product.category as Category] ??
+    categoryColors[product.category] ??
     "bg-primary/10 text-primary border-primary/30";
+
+  const availableSizes = getSizesForCategory(product.category);
 
   const handleAddToCart = () => {
     if (!selectedSize) {
@@ -173,24 +180,41 @@ export function ProductQuickView({
                     Select Size
                   </p>
                   <div className="flex gap-2 flex-wrap">
-                    {SIZES.map((size) => (
-                      <button
-                        key={size}
-                        type="button"
-                        data-ocid={`product.quickview.size_${size.toLowerCase()}_button`}
-                        onClick={() => {
-                          setSelectedSize(size);
-                          setShowSizeError(false);
-                        }}
-                        className={`w-14 py-2 text-sm font-medium border transition-all duration-150 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold ${
-                          selectedSize === size
-                            ? "gold-gradient text-charcoal border-transparent shadow-sm"
-                            : "border-border text-muted-foreground hover:border-primary hover:text-primary"
-                        }`}
-                      >
-                        {size}
-                      </button>
-                    ))}
+                    {availableSizes.map((size) => {
+                      const outOfStock = isSizeOutOfStock(
+                        stockData as
+                          | Array<{
+                              productId: string;
+                              size: string;
+                              quantity: bigint;
+                            }>
+                          | undefined,
+                        product.id.toString(),
+                        size,
+                      );
+                      return (
+                        <button
+                          key={size}
+                          type="button"
+                          data-ocid={`product.quickview.size_${size.toLowerCase()}_button`}
+                          disabled={outOfStock}
+                          onClick={() => {
+                            if (outOfStock) return;
+                            setSelectedSize(size);
+                            setShowSizeError(false);
+                          }}
+                          className={`w-14 py-2 text-sm font-medium border transition-all duration-150 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold ${
+                            outOfStock
+                              ? "border-border/40 text-muted-foreground/40 line-through cursor-not-allowed pointer-events-none opacity-50"
+                              : selectedSize === size
+                                ? "gold-gradient text-charcoal border-transparent shadow-sm"
+                                : "border-border text-muted-foreground hover:border-primary hover:text-primary"
+                          }`}
+                        >
+                          {size}
+                        </button>
+                      );
+                    })}
                   </div>
                   {showSizeError && (
                     <p className="text-xs text-destructive mt-2">

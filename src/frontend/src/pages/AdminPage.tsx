@@ -11,24 +11,30 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import {
   BarChart2,
   CheckCircle2,
   Download,
+  Edit3,
   Eye,
   EyeOff,
   Globe,
+  ImageIcon,
   IndianRupee,
   Loader2,
   LogOut,
   Minus,
+  Package,
   Plus,
   RefreshCw,
   ShoppingBag,
   Tag,
   TrendingUp,
+  Upload,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { ExternalBlob } from "../backend";
 import {
   SIZES,
   useAnalytics,
@@ -37,11 +43,16 @@ import {
   useResetAllStock,
   useSales,
   useSetCostPrice,
+  useSetProductOverride,
   useSetStockEntry,
   useStock,
 } from "../hooks/useAdminData";
 import type { StockEntry } from "../hooks/useAdminData";
-import { CATALOG_PRODUCTS } from "../hooks/useQueries";
+import {
+  CATALOG_PRODUCTS,
+  getProductImage,
+  useImageOverrides,
+} from "../hooks/useQueries";
 
 const ADMIN_PASSWORD = "Divine@2024";
 const SESSION_KEY = "dc_admin_auth";
@@ -438,6 +449,282 @@ function AnalyticsTab() {
 }
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────────────
+
+// ── Category helpers for products tab ───────────────────────────────────
+const PRODUCT_CATEGORY_LABEL: Record<string, string> = {
+  Kurties: "Suit Sets",
+  Sarees: "Kurti Sets",
+  CoordSets: "Co-ord Sets",
+  NightWear: "Night Wear",
+};
+
+const PRODUCT_CATEGORY_ORDER = ["Kurties", "Sarees", "CoordSets", "NightWear"];
+
+// ── ProductRow ──────────────────────────────────────────────────────────────
+interface ProductRowProps {
+  product: (typeof CATALOG_PRODUCTS)[0];
+  currentImage: string;
+  rowIndex: number;
+}
+
+function ProductRow({ product, currentImage, rowIndex }: ProductRowProps) {
+  const setOverride = useSetProductOverride();
+
+  const [draftPrice, setDraftPrice] = React.useState(
+    Number(product.price).toString(),
+  );
+  const [draftDesc, setDraftDesc] = React.useState(product.description ?? "");
+  const [imageUrl, setImageUrl] = React.useState("");
+  const [uploadProgress, setUploadProgress] = React.useState(0);
+  const [isUploading, setIsUploading] = React.useState(false);
+  const [saved, setSaved] = React.useState(false);
+  const [error, setError] = React.useState("");
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploading(true);
+    setError("");
+    setUploadProgress(0);
+    try {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const blob = ExternalBlob.fromBytes(bytes).withUploadProgress((pct) => {
+        setUploadProgress(pct);
+      });
+      const url = blob.getDirectURL();
+      setImageUrl(url);
+    } catch (_err) {
+      setError("Image upload failed. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    setError("");
+    const priceNum = Number.parseFloat(draftPrice);
+    const payload: {
+      productId: string;
+      price?: number;
+      description?: string;
+      imageUrl?: string;
+    } = {
+      productId: product.id.toString(),
+    };
+    if (!Number.isNaN(priceNum) && priceNum > 0) payload.price = priceNum;
+    if (draftDesc.trim()) payload.description = draftDesc.trim();
+    if (imageUrl) payload.imageUrl = imageUrl;
+
+    try {
+      await setOverride.mutateAsync(payload);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (_err) {
+      setError("Save failed. Please try again.");
+    }
+  };
+
+  const previewImage = imageUrl || currentImage;
+
+  return (
+    <div
+      data-ocid={`admin.products.item.${rowIndex}`}
+      className="flex flex-col sm:flex-row gap-4 p-4 border border-border rounded-sm bg-card"
+    >
+      {/* Image preview */}
+      <div className="flex-shrink-0 flex flex-col items-center gap-2">
+        <div className="w-20 h-20 rounded-sm overflow-hidden border border-border bg-muted flex items-center justify-center">
+          {previewImage ? (
+            <img
+              src={previewImage}
+              alt={product.name}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = "none";
+              }}
+            />
+          ) : (
+            <ImageIcon className="h-8 w-8 text-muted-foreground opacity-40" />
+          )}
+        </div>
+        <label
+          data-ocid={`admin.products.upload_button.${rowIndex}`}
+          className="flex items-center gap-1 text-xs text-primary cursor-pointer hover:underline"
+          htmlFor={`file-upload-${rowIndex}`}
+        >
+          <Upload className="h-3 w-3" />
+          {isUploading ? `${Math.round(uploadProgress)}%` : "Upload Image"}
+          <input
+            id={`file-upload-${rowIndex}`}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileChange}
+            disabled={isUploading}
+          />
+        </label>
+        {isUploading && (
+          <div
+            data-ocid={`admin.products.loading_state.${rowIndex}`}
+            className="w-20"
+          >
+            <div className="w-full bg-muted rounded-full h-1.5">
+              <div
+                className="bg-primary h-1.5 rounded-full transition-all"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
+          </div>
+        )}
+        {imageUrl && !isUploading && (
+          <span className="text-xs text-green-500 flex items-center gap-1">
+            <CheckCircle2 className="h-3 w-3" /> Ready
+          </span>
+        )}
+      </div>
+
+      {/* Fields */}
+      <div className="flex-1 space-y-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-semibold text-foreground">{product.name}</span>
+          <Badge variant="outline" className="text-xs">
+            {PRODUCT_CATEGORY_LABEL[product.category as string] ??
+              (product.category as string)}
+          </Badge>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <label
+              htmlFor={`price-${rowIndex}`}
+              className="text-xs text-muted-foreground font-medium"
+            >
+              Price (₹)
+            </label>
+            <div className="flex items-center gap-1">
+              <span className="text-muted-foreground text-sm">₹</span>
+              <Input
+                id={`price-${rowIndex}`}
+                data-ocid={`admin.products.input.${rowIndex}`}
+                type="number"
+                min="0"
+                step="1"
+                value={draftPrice}
+                onChange={(e) => setDraftPrice(e.target.value)}
+                className="h-8 text-sm"
+                placeholder={Number(product.price).toString()}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-1">
+          <label
+            htmlFor={`desc-${rowIndex}`}
+            className="text-xs text-muted-foreground font-medium"
+          >
+            Description
+          </label>
+          <Textarea
+            id={`desc-${rowIndex}`}
+            data-ocid={`admin.products.textarea.${rowIndex}`}
+            value={draftDesc}
+            onChange={(e) => setDraftDesc(e.target.value)}
+            rows={2}
+            className="text-sm resize-none"
+            placeholder="Product description..."
+          />
+        </div>
+
+        {error && (
+          <p
+            data-ocid={`admin.products.error_state.${rowIndex}`}
+            className="text-xs text-destructive"
+          >
+            {error}
+          </p>
+        )}
+
+        <div className="flex items-center gap-3">
+          <Button
+            data-ocid={`admin.products.save_button.${rowIndex}`}
+            size="sm"
+            onClick={handleSave}
+            disabled={setOverride.isPending}
+            className="gold-gradient text-charcoal font-bold gap-2"
+          >
+            {setOverride.isPending ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Edit3 className="h-3 w-3" />
+            )}
+            Save Changes
+          </Button>
+          {saved && (
+            <span
+              data-ocid={`admin.products.success_state.${rowIndex}`}
+              className="flex items-center gap-1 text-green-500 text-xs font-medium"
+            >
+              <CheckCircle2 className="h-3 w-3" /> Saved!
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── ProductsTab ─────────────────────────────────────────────────────────────
+function ProductsTab() {
+  const imageOverrides = useImageOverrides();
+
+  let globalIdx = 0;
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h2 className="font-display text-xl font-bold text-foreground">
+          Manage Products
+        </h2>
+        <p className="text-muted-foreground text-sm">
+          Update images, prices, and descriptions for each product. Changes
+          apply immediately without a rebuild.
+        </p>
+      </div>
+
+      {PRODUCT_CATEGORY_ORDER.map((cat) => {
+        const products = CATALOG_PRODUCTS.filter(
+          (p) => (p.category as string) === cat,
+        );
+        if (products.length === 0) return null;
+        return (
+          <div key={cat} className="space-y-3">
+            <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">
+              {PRODUCT_CATEGORY_LABEL[cat] ?? cat}
+            </h3>
+            <div className="space-y-3">
+              {products.map((product) => {
+                globalIdx += 1;
+                const currentImage =
+                  imageOverrides[product.id.toString()] ??
+                  getProductImage(product, []);
+                return (
+                  <ProductRow
+                    key={product.id.toString()}
+                    product={product}
+                    currentImage={currentImage}
+                    rowIndex={globalIdx}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function Dashboard({ onLogout }: { onLogout: () => void }) {
   const { sales, isLoading: salesLoading } = useSales();
   const { stock, isLoading: stockLoading, refetch: refetchStock } = useStock();
@@ -678,6 +965,14 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             >
               <Tag className="h-4 w-4" />
               Cost Prices
+            </TabsTrigger>
+            <TabsTrigger
+              value="products"
+              data-ocid="admin.products.tab"
+              className="gap-2"
+            >
+              <Package className="h-4 w-4" />
+              Products
             </TabsTrigger>
           </TabsList>
 
@@ -1237,6 +1532,11 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               * Cost prices are saved to the backend. After saving, go to the
               Sales tab to see P&amp;L per order and updated summary cards.
             </p>
+          </TabsContent>
+
+          {/* ── PRODUCTS TAB ── */}
+          <TabsContent value="products" className="space-y-6">
+            <ProductsTab />
           </TabsContent>
         </Tabs>
       </main>

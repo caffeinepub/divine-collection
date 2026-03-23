@@ -3,7 +3,11 @@ import { motion } from "motion/react";
 import { useMemo, useState } from "react";
 import { Category } from "../backend.d";
 import type { Product } from "../backend.d";
-import { getProductImage, useAllProducts } from "../hooks/useQueries";
+import {
+  getProductImage,
+  useAllProducts,
+  useImageOverrides,
+} from "../hooks/useQueries";
 import { ProductCard } from "./ProductCard";
 import { ProductQuickView } from "./ProductQuickView";
 
@@ -14,11 +18,13 @@ const tabs: { value: FilterTab; label: string }[] = [
   { value: Category.Kurties, label: "Suit Sets" },
   { value: Category.Sarees, label: "Kurti Sets" },
   { value: Category.CoordSets, label: "Co-ord Sets" },
+  { value: Category.NightWear, label: "Night Wear" },
 ];
 
 export function ShopSection() {
   const [activeTab, setActiveTab] = useState<FilterTab>("All");
   const { data: allProducts, isLoading } = useAllProducts();
+  const imageOverrides = useImageOverrides();
 
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(
     null,
@@ -27,17 +33,15 @@ export function ShopSection() {
 
   const products = allProducts ?? [];
 
-  const getCategoryProducts = (category: Category) =>
-    products.filter((p) => p.category === category);
-
   const filteredProducts = useMemo(() => {
     if (activeTab === "All") return products;
     return products.filter((p) => p.category === activeTab);
   }, [products, activeTab]);
 
   const getImage = (product: Product) => {
-    const catProds = getCategoryProducts(product.category);
-    return getProductImage(product, catProds);
+    return (
+      imageOverrides[product.id.toString()] ?? getProductImage(product, [])
+    );
   };
 
   const handleQuickView = (product: Product, image: string) => {
@@ -69,8 +73,8 @@ export function ShopSection() {
           </h2>
           <div className="section-divider max-w-xs mx-auto mt-4" />
           <p className="text-muted-foreground mt-4 text-base max-w-xl mx-auto">
-            From elegant suit sets to kurti sets and festive co-ord sets — find
-            your perfect piece.
+            From elegant suit sets to kurti sets, co-ord sets and comfortable
+            night wear — find your perfect piece.
           </p>
         </motion.div>
 

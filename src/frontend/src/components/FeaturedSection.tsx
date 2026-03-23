@@ -6,6 +6,7 @@ import {
   getProductImage,
   useAllProducts,
   useFeaturedProducts,
+  useImageOverrides,
 } from "../hooks/useQueries";
 import { ProductCard } from "./ProductCard";
 import { ProductQuickView } from "./ProductQuickView";
@@ -13,6 +14,7 @@ import { ProductQuickView } from "./ProductQuickView";
 export function FeaturedSection() {
   const { data: featured, isLoading } = useFeaturedProducts();
   const { data: allProducts } = useAllProducts();
+  const imageOverrides = useImageOverrides();
 
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(
     null,
@@ -22,6 +24,9 @@ export function FeaturedSection() {
   const products = featured ?? [];
 
   const getImage = (product: Product) => {
+    if (imageOverrides[product.id.toString()]) {
+      return imageOverrides[product.id.toString()];
+    }
     const catProds = (allProducts ?? []).filter(
       (p) => p.category === product.category,
     );

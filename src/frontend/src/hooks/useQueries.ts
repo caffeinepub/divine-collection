@@ -1,6 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Category, type Product } from "../backend.d";
+import type { ProductOverride } from "../backend.d";
 import { useActor } from "./useActor";
+
+// Extended actor type for product overrides
+interface ActorWithOverrides {
+  getProductOverrides(): Promise<Array<ProductOverride>>;
+}
 
 export type { Product, Category };
 
@@ -103,25 +109,95 @@ export const CATALOG_PRODUCTS: Product[] = [
     category: Category.Kurties,
     price: BigInt(885),
   },
+  // ── Night Wear ─────────────────────────────────────────────────────────────
+  {
+    id: BigInt(30),
+    name: "Night Wear 1",
+    description:
+      "A soft and comfortable night wear set in a soothing sage green, perfect for a restful night's sleep.",
+    isFeatured: false,
+    category: Category.NightWear,
+    price: BigInt(850),
+  },
+  {
+    id: BigInt(31),
+    name: "Night Wear 2",
+    description:
+      "A stylish night wear set featuring the full Divine Collection range — relax in comfort and style.",
+    isFeatured: false,
+    category: Category.NightWear,
+    price: BigInt(850),
+  },
 ];
 
-/** Always returns the full static catalog — backend is bypassed. */
-export function useAllProducts() {
-  return { data: CATALOG_PRODUCTS, isLoading: false };
+// ── Product Overrides ─────────────────────────────────────────────────────────
+
+export function useProductOverrides() {
+  const { actor, isFetching } = useActor();
+  return useQuery({
+    queryKey: ["product-overrides"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return (actor as unknown as ActorWithOverrides).getProductOverrides();
+    },
+    enabled: !!actor && !isFetching,
+    staleTime: 30_000,
+  });
 }
 
-/** Always returns only featured products from the static catalog. */
+export function useImageOverrides(): Record<string, string> {
+  const { data: overrides } = useProductOverrides();
+  const map: Record<string, string> = {};
+  if (overrides) {
+    for (const o of overrides) {
+      if (o.imageUrl.length > 0 && o.imageUrl[0]) {
+        map[o.productId] = o.imageUrl[0] as string;
+      }
+    }
+  }
+  return map;
+}
+
+/** Returns all products merged with any admin overrides for price and description. */
+export function useAllProducts() {
+  const { data: overrides } = useProductOverrides();
+  const overrideMap: Record<string, { price?: bigint; description?: string }> =
+    {};
+  if (overrides) {
+    for (const o of overrides) {
+      overrideMap[o.productId] = {
+        price: o.price.length > 0 ? (o.price[0] as bigint) : undefined,
+        description:
+          o.description.length > 0 ? (o.description[0] as string) : undefined,
+      };
+    }
+  }
+  const merged = CATALOG_PRODUCTS.map((p) => {
+    const ov = overrideMap[p.id.toString()];
+    if (!ov) return p;
+    return {
+      ...p,
+      price: ov.price ?? p.price,
+      description: ov.description ?? p.description,
+    };
+  });
+  return { data: merged, isLoading: false };
+}
+
+/** Returns only featured products, with overrides applied. */
 export function useFeaturedProducts() {
+  const { data: all } = useAllProducts();
   return {
-    data: CATALOG_PRODUCTS.filter((p) => p.isFeatured),
+    data: (all ?? []).filter((p) => p.isFeatured),
     isLoading: false,
   };
 }
 
-/** Always returns products for the given category from the static catalog. */
+/** Returns products for a given category, with overrides applied. */
 export function useProductsByCategory(category: Category) {
+  const { data: all } = useAllProducts();
   return {
-    data: CATALOG_PRODUCTS.filter((p) => p.category === category),
+    data: (all ?? []).filter((p) => p.category === category),
     isLoading: false,
   };
 }
@@ -162,15 +238,55 @@ export function useInitBackend() {
   });
 }
 
+export function useStock() {
+  const { actor, isFetching } = useActor();
+  return useQuery({
+    queryKey: ["stock"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getStock();
+    },
+    enabled: !!actor && !isFetching,
+    staleTime: 30_000,
+  });
+}
+
+/**
+ * Returns true if the given size is out of stock for a product.
+ * Only returns true when stock data is loaded AND quantity is exactly 0.
+ * If stock list is empty (not initialized), all sizes are treated as available.
+ */
+export function isSizeOutOfStock(
+  stockData:
+    | Array<{ productId: string; size: string; quantity: bigint }>
+    | undefined,
+  productId: string,
+  size: string,
+): boolean {
+  if (!stockData || stockData.length === 0) return false;
+  const entry = stockData.find(
+    (s) => s.productId === productId && s.size === size,
+  );
+  if (!entry) return false;
+  return entry.quantity === BigInt(0);
+}
+
+/**
+ * Returns the available sizes for a given category.
+ * Night Wear only has M, L, XL (no XXL).
+ */
+export function getSizesForCategory(
+  category: Category,
+): Array<"M" | "L" | "XL" | "XXL"> {
+  if (category === Category.NightWear) return ["M", "L", "XL"];
+  return ["M", "L", "XL", "XXL"];
+}
+
 /**
  * Maps a product to its image path based on product ID.
- * Each ID is pinned to a specific uploaded image so no two products share
- * the same photo and every image is shown regardless of context.
- *
- * Static literals are required so the build prune script keeps the files.
  */
 
-// Suite Sets (Category.Kurties) — 8 uploaded photos, one per product ID
+// Suit Sets (Category.Kurties)
 const SUIT_IMAGE_BY_ID: Record<string, string> = {
   "7": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-1--1.jpeg",
   "8": "/assets/uploads/ChatGPT-Image-Mar-11-2026-05_41_46-PM-1.png",
@@ -182,16 +298,22 @@ const SUIT_IMAGE_BY_ID: Record<string, string> = {
   "20": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.51-PM-8.jpeg",
 };
 
-// Kurti Sets (Category.Sarees repurposed) — 3 uploaded photos
+// Kurti Sets (Category.Sarees repurposed)
 const KURTI_IMAGE_BY_ID: Record<string, string> = {
   "21": "/assets/uploads/ChatGPT-Image-Mar-17-2026-05_21_56-PM-1-1.png",
   "22": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.45-PM-2--2.jpeg",
   "23": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.45-PM-3--3.jpeg",
 };
 
-// Coord Sets (Category.CoordSets) — 1 uploaded photo
+// Coord Sets (Category.CoordSets)
 const COORD_IMAGE_BY_ID: Record<string, string> = {
   "4": "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.45-PM-1--1.jpeg",
+};
+
+// Night Wear (Category.NightWear)
+const NIGHTWEAR_IMAGE_BY_ID: Record<string, string> = {
+  "30": "/assets/uploads/WhatsApp-Image-2026-03-22-at-4.47.00-PM-1.jpeg",
+  "31": "/assets/uploads/WhatsApp-Image-2026-03-22-at-7.50.49-PM-2.jpeg",
 };
 
 export function getProductImage(
@@ -215,6 +337,11 @@ export function getProductImage(
         COORD_IMAGE_BY_ID[key] ??
         "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.45-PM-1--1.jpeg"
       );
+    case Category.NightWear:
+      return (
+        NIGHTWEAR_IMAGE_BY_ID[key] ??
+        "/assets/uploads/WhatsApp-Image-2026-03-22-at-4.47.00-PM-1.jpeg"
+      );
     default:
       return "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-1--1.jpeg";
   }
@@ -225,5 +352,5 @@ export function getProductImage(
  */
 export function formatPrice(price: bigint): string {
   const num = Number(price);
-  return `₹${num.toLocaleString("en-IN")}/-`;
+  return `\u20b9${num.toLocaleString("en-IN")}/-`;
 }

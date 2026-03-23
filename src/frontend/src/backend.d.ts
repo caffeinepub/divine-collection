@@ -55,10 +55,17 @@ export interface StockEntry {
     quantity: bigint;
     category: string;
 }
+export interface ProductOverride {
+    productId: string;
+    price: [] | [bigint];
+    description: [] | [string];
+    imageUrl: [] | [string];
+}
 export enum Category {
     Sarees = "Sarees",
     CoordSets = "CoordSets",
-    Kurties = "Kurties"
+    Kurties = "Kurties",
+    NightWear = "NightWear"
 }
 export interface backendInterface {
     addSale(customerName: string, mobile: string, address: string, items: Array<SaleItem>, total: bigint): Promise<void>;
@@ -78,5 +85,7 @@ export interface backendInterface {
     resetAllStock(): Promise<void>;
     setCostPrice(productId: string, costPrice: number): Promise<void>;
     setStockEntry(productId: string, productName: string, category: string, size: string, quantity: bigint): Promise<void>;
+    setProductOverride(productId: string, price: [] | [bigint], description: [] | [string], imageUrl: [] | [string]): Promise<void>;
+    getProductOverrides(): Promise<Array<ProductOverride>>;
     submitContactMessage(name: string, email: string, message: string): Promise<void>;
 }

@@ -8,9 +8,9 @@ import Float "mo:core/Float";
 import Order "mo:core/Order";
 import Iter "mo:core/Iter";
 import Text "mo:core/Text";
-import Migration "migration";
 
-(with migration = Migration.run)
+
+
 actor {
   //----------------------------------------
   // Type Definitions
@@ -75,6 +75,13 @@ actor {
   type VisitRecord = {
     page : Text;
     timestamp : Timestamp;
+  };
+
+  type ProductOverride = {
+    productId : Text;
+    price : ?Nat;
+    description : ?Text;
+    imageUrl : ?Text;
   };
 
   //----------------------------------------
@@ -337,5 +344,29 @@ actor {
 
   public query ({ caller }) func getAnalytics() : async [VisitRecord] {
     analytics.values().toArray();
+  };
+
+  //----------------------------------------
+  // Product Overrides (dynamic catalog management)
+  //----------------------------------------
+  let productOverrides = Map.empty<Text, ProductOverride>();
+
+  public shared ({ caller }) func setProductOverride(
+    productId : Text,
+    price : ?Nat,
+    description : ?Text,
+    imageUrl : ?Text,
+  ) : async () {
+    let entry : ProductOverride = {
+      productId;
+      price;
+      description;
+      imageUrl;
+    };
+    productOverrides.add(productId, entry);
+  };
+
+  public query ({ caller }) func getProductOverrides() : async [ProductOverride] {
+    productOverrides.values().toArray();
   };
 };

@@ -8,9 +8,13 @@ import type { Product } from "../backend.d";
 import { Footer } from "../components/Footer";
 import { ProductCard } from "../components/ProductCard";
 import { ProductQuickView } from "../components/ProductQuickView";
-import { getProductImage, useAllProducts } from "../hooks/useQueries";
+import {
+  getProductImage,
+  useAllProducts,
+  useImageOverrides,
+} from "../hooks/useQueries";
 
-// ── Per-collection metadata ──────────────────────────────────────────────────
+// ── Per-collection metadata ────────────────────────────────────────────────────────────────
 const COLLECTION_META: Record<
   Category,
   {
@@ -50,20 +54,30 @@ const COLLECTION_META: Record<
     heroGradient:
       "linear-gradient(135deg, oklch(0.18 0.06 25 / 0.88) 0%, oklch(0.28 0.08 45 / 0.70) 100%)",
   },
+  [Category.NightWear]: {
+    title: "Night Wear",
+    subtitle: "Relax in Style",
+    description:
+      "Soft, breathable night wear sets designed for a restful night's sleep — combining comfort with style so you can unwind in elegance every evening.",
+    heroImage: "/assets/uploads/WhatsApp-Image-2026-03-22-at-7.50.49-PM-2.jpeg",
+    heroGradient:
+      "linear-gradient(135deg, oklch(0.18 0.05 270 / 0.88) 0%, oklch(0.28 0.06 240 / 0.70) 100%)",
+  },
 };
 
-// ── Props ────────────────────────────────────────────────────────────────────
+// ── Props ──────────────────────────────────────────────────────────────────────────
 export interface CollectionPageProps {
   category: Category;
   onNavigateHome: (section?: string) => void;
 }
 
-// ── Page content (no CartProvider — expects it from App.tsx) ─────────────────
+// ── Page content (no CartProvider — expects it from App.tsx) ─────────────────────────
 export function CollectionPageContent({
   category,
   onNavigateHome,
 }: CollectionPageProps) {
   const { data: allProducts, isLoading } = useAllProducts();
+  const imageOverrides = useImageOverrides();
 
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(
     null,
@@ -80,6 +94,7 @@ export function CollectionPageContent({
   const meta = COLLECTION_META[category];
 
   const getImage = (product: Product) =>
+    imageOverrides[product.id.toString()] ??
     getProductImage(product, categoryProducts);
 
   const handleQuickView = (product: Product, image: string) => {

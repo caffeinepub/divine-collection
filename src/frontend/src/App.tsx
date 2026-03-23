@@ -25,12 +25,14 @@ const SLUG_TO_CATEGORY: Record<string, Category> = {
   "suit-sets": Category.Kurties,
   "kurti-sets": Category.Sarees,
   "coord-sets": Category.CoordSets,
+  "night-wear": Category.NightWear,
 };
 
 const CATEGORY_TO_SLUG: Record<Category, string> = {
   [Category.Sarees]: "kurti-sets",
   [Category.CoordSets]: "coord-sets",
   [Category.Kurties]: "suit-sets",
+  [Category.NightWear]: "night-wear",
 };
 
 function resolveRoute(): Route {
@@ -44,7 +46,7 @@ function resolveRoute(): Route {
   return { page: "home" };
 }
 
-// ── Home page content ───────────────────────────────────────────────────────────────
+// ── Home page content ──────────────────────────────────────────────────────────────────────
 function HomePage({
   onNavigateToCollection,
 }: {
@@ -115,7 +117,7 @@ function HomePage({
   );
 }
 
-// ── Root App ─────────────────────────────────────────────────────────────────
+// ── Root App ──────────────────────────────────────────────────────────────────────────
 function AppContent() {
   const [route, setRoute] = useState<Route>(resolveRoute);
 
@@ -164,6 +166,8 @@ function AppContent() {
         recordVisit("Kurti Sets");
       } else if (route.category === Category.CoordSets) {
         recordVisit("Co-ord Sets");
+      } else if (route.category === Category.NightWear) {
+        recordVisit("Night Wear");
       }
     }
   }, [route]);

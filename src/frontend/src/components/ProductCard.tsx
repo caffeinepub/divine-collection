@@ -6,7 +6,12 @@ import type { Product } from "../backend.d";
 import { Category } from "../backend.d";
 import type { ProductSize } from "../hooks/useCart";
 import { useCart } from "../hooks/useCart";
-import { formatPrice } from "../hooks/useQueries";
+import {
+  formatPrice,
+  getSizesForCategory,
+  isSizeOutOfStock,
+  useStock,
+} from "../hooks/useQueries";
 import { SizeChartModal } from "./SizeChartModal";
 
 interface ProductCardProps {
@@ -17,18 +22,18 @@ interface ProductCardProps {
   onQuickView?: (product: Product, image: string) => void;
 }
 
-const SIZES: ProductSize[] = ["M", "L", "XL", "XXL"];
-
-const categoryColors: Record<Category, string> = {
+const categoryColors: Record<string, string> = {
   [Category.Sarees]: "bg-magenta/10 text-magenta border-magenta/30",
   [Category.CoordSets]: "bg-gold/10 text-gold-dark border-gold/30",
   [Category.Kurties]: "bg-crimson/10 text-crimson border-crimson/30",
+  [Category.NightWear]: "bg-indigo-100 text-indigo-700 border-indigo-200",
 };
 
-const categoryLabels: Record<Category, string> = {
+const categoryLabels: Record<string, string> = {
   [Category.Sarees]: "Kurti Set",
   [Category.CoordSets]: "Co-ord Set",
   [Category.Kurties]: "Suit",
+  [Category.NightWear]: "Night Wear",
 };
 
 export function ProductCard({
@@ -42,6 +47,9 @@ export function ProductCard({
   const [selectedSize, setSelectedSize] = useState<ProductSize | null>(null);
   const [showSizeError, setShowSizeError] = useState(false);
   const [showSizeChart, setShowSizeChart] = useState(false);
+  const { data: stockData } = useStock();
+
+  const availableSizes = getSizesForCategory(product.category);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -75,11 +83,11 @@ export function ProductCard({
           <div className="absolute top-3 left-3 pointer-events-none">
             <span
               className={`text-xs font-medium px-2 py-1 rounded-full border backdrop-blur-sm ${
-                categoryColors[product.category as Category] ??
+                categoryColors[product.category] ??
                 "bg-white/80 text-charcoal border-border"
               }`}
             >
-              {categoryLabels[product.category as Category] ?? product.category}
+              {categoryLabels[product.category] ?? product.category}
             </span>
           </div>
           {product.isFeatured && (
@@ -129,24 +137,41 @@ export function ProductCard({
               Select Size
             </p>
             <div className="flex gap-1.5 flex-wrap">
-              {SIZES.map((size) => (
-                <button
-                  key={size}
-                  type="button"
-                  data-ocid={`product.size_${size.toLowerCase()}_button`}
-                  onClick={() => {
-                    setSelectedSize(size);
-                    setShowSizeError(false);
-                  }}
-                  className={`px-2.5 py-1 text-xs font-medium border transition-all duration-150 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold ${
-                    selectedSize === size
-                      ? "gold-gradient text-charcoal border-transparent"
-                      : "border-border text-muted-foreground hover:border-primary hover:text-primary"
-                  }`}
-                >
-                  {size}
-                </button>
-              ))}
+              {availableSizes.map((size) => {
+                const outOfStock = isSizeOutOfStock(
+                  stockData as
+                    | Array<{
+                        productId: string;
+                        size: string;
+                        quantity: bigint;
+                      }>
+                    | undefined,
+                  product.id.toString(),
+                  size,
+                );
+                return (
+                  <button
+                    key={size}
+                    type="button"
+                    data-ocid={`product.size_${size.toLowerCase()}_button`}
+                    disabled={outOfStock}
+                    onClick={() => {
+                      if (outOfStock) return;
+                      setSelectedSize(size);
+                      setShowSizeError(false);
+                    }}
+                    className={`px-2.5 py-1 text-xs font-medium border transition-all duration-150 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold ${
+                      outOfStock
+                        ? "border-border/40 text-muted-foreground/40 line-through cursor-not-allowed pointer-events-none opacity-50"
+                        : selectedSize === size
+                          ? "gold-gradient text-charcoal border-transparent"
+                          : "border-border text-muted-foreground hover:border-primary hover:text-primary"
+                    }`}
+                  >
+                    {size}
+                  </button>
+                );
+              })}
             </div>
             {showSizeError && (
               <p className="text-xs text-destructive mt-1">
