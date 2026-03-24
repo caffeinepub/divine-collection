@@ -20,6 +20,22 @@ export interface ContactMessage {
   'timestamp' : Timestamp,
 }
 export interface CostPriceEntry { 'productId' : string, 'costPrice' : number }
+export interface DynamicCategory {
+  'id' : string,
+  'displayOrder' : bigint,
+  'name' : string,
+}
+export interface DynamicProduct {
+  'id' : string,
+  'categoryId' : string,
+  'displayOrder' : bigint,
+  'name' : string,
+  'description' : string,
+  'isActive' : boolean,
+  'sizes' : Array<string>,
+  'imageUrl' : [] | [string],
+  'price' : bigint,
+}
 export interface Product {
   'id' : ProductId,
   'name' : string,
@@ -29,6 +45,12 @@ export interface Product {
   'price' : bigint,
 }
 export type ProductId = bigint;
+export interface ProductOverride {
+  'description' : [] | [string],
+  'productId' : string,
+  'imageUrl' : [] | [string],
+  'price' : [] | [bigint],
+}
 export interface Sale {
   'id' : SaleId,
   'customerName' : string,
@@ -55,31 +77,79 @@ export interface StockEntry {
 }
 export type Timestamp = bigint;
 export interface VisitRecord { 'page' : string, 'timestamp' : Timestamp }
+export interface _CaffeineStorageCreateCertificateResult {
+  'method' : string,
+  'blob_hash' : string,
+}
+export interface _CaffeineStorageRefillInformation {
+  'proposed_top_up_amount' : [] | [bigint],
+}
+export interface _CaffeineStorageRefillResult {
+  'success' : [] | [boolean],
+  'topped_up_amount' : [] | [bigint],
+}
 export interface _SERVICE {
+  '_caffeineStorageBlobIsLive' : ActorMethod<[Uint8Array], boolean>,
+  '_caffeineStorageBlobsToDelete' : ActorMethod<[], Array<Uint8Array>>,
+  '_caffeineStorageConfirmBlobDeletion' : ActorMethod<
+    [Array<Uint8Array>],
+    undefined
+  >,
+  '_caffeineStorageCreateCertificate' : ActorMethod<
+    [string],
+    _CaffeineStorageCreateCertificateResult
+  >,
+  '_caffeineStorageRefillCashier' : ActorMethod<
+    [[] | [_CaffeineStorageRefillInformation]],
+    _CaffeineStorageRefillResult
+  >,
+  '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
+  'addDynamicCategory' : ActorMethod<[string], string>,
+  'addDynamicProduct' : ActorMethod<
+    [string, string, string, bigint, Array<string>, [] | [string]],
+    string
+  >,
   'addSale' : ActorMethod<
     [string, string, string, Array<SaleItem>, bigint],
     undefined
   >,
   'deductStock' : ActorMethod<[string, string, bigint], undefined>,
+  'deleteDynamicCategory' : ActorMethod<[string], boolean>,
+  'deleteDynamicProduct' : ActorMethod<[string], boolean>,
   'getAllContactMessages' : ActorMethod<[], Array<ContactMessage>>,
   'getAllProducts' : ActorMethod<[], Array<Product>>,
   'getAllSales' : ActorMethod<[], Array<Sale>>,
   'getAnalytics' : ActorMethod<[], Array<VisitRecord>>,
   'getCostPrices' : ActorMethod<[], Array<CostPriceEntry>>,
+  'getDynamicCategories' : ActorMethod<[], Array<DynamicCategory>>,
+  'getDynamicProducts' : ActorMethod<[], Array<DynamicProduct>>,
+  'getDynamicProductsByCategory' : ActorMethod<[string], Array<DynamicProduct>>,
   'getFeaturedProducts' : ActorMethod<[], Array<Product>>,
   'getProductById' : ActorMethod<[ProductId], Product>,
+  'getProductOverrides' : ActorMethod<[], Array<ProductOverride>>,
   'getProductsByCategory' : ActorMethod<[Category], Array<Product>>,
   'getStock' : ActorMethod<[], Array<StockEntry>>,
   'init' : ActorMethod<[], undefined>,
   'initStock' : ActorMethod<[Array<StockEntry>], undefined>,
   'recordVisit' : ActorMethod<[string], undefined>,
   'resetAllStock' : ActorMethod<[], undefined>,
+  'setCategoryOrder' : ActorMethod<[string, bigint], undefined>,
   'setCostPrice' : ActorMethod<[string, number], undefined>,
+  'setDynamicProductOrder' : ActorMethod<[string, bigint], undefined>,
+  'setProductOverride' : ActorMethod<
+    [string, [] | [bigint], [] | [string], [] | [string]],
+    undefined
+  >,
   'setStockEntry' : ActorMethod<
     [string, string, string, string, bigint],
     undefined
   >,
   'submitContactMessage' : ActorMethod<[string, string, string], undefined>,
+  'updateDynamicCategory' : ActorMethod<[string, string], boolean>,
+  'updateDynamicProduct' : ActorMethod<
+    [string, string, string, bigint, Array<string>, [] | [string], boolean],
+    boolean
+  >,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

@@ -1,49 +1,127 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "motion/react";
 import { useMemo, useState } from "react";
-import { Category } from "../backend.d";
-import type { Product } from "../backend.d";
+import type { DisplayProduct } from "../hooks/useQueries";
 import {
-  getProductImage,
+  dynamicToDisplayProduct,
+  toDisplayProduct,
   useAllProducts,
+  useDynamicCategories,
+  useDynamicProducts,
   useImageOverrides,
+  useProductOverrides,
 } from "../hooks/useQueries";
+import { getProductImage } from "../hooks/useQueries";
 import { ProductCard } from "./ProductCard";
 import { ProductQuickView } from "./ProductQuickView";
 
-type FilterTab = "All" | Category;
-
-const tabs: { value: FilterTab; label: string }[] = [
-  { value: "All", label: "All Collections" },
-  { value: Category.Kurties, label: "Suit Sets" },
-  { value: Category.Sarees, label: "Kurti Sets" },
-  { value: Category.CoordSets, label: "Co-ord Sets" },
-];
+const ALL_TAB = "__all__";
 
 export function ShopSection() {
-  const [activeTab, setActiveTab] = useState<FilterTab>("All");
-  const { data: allProducts, isLoading } = useAllProducts();
+  const [activeTab, setActiveTab] = useState<string>(ALL_TAB);
+  const { data: dynamicCategories, isLoading: catsLoading } =
+    useDynamicCategories();
+  const { data: dynamicProducts, isLoading: prodsLoading } =
+    useDynamicProducts();
+  const { data: staticProducts } = useAllProducts();
+  const { data: overrides } = useProductOverrides();
   const imageOverrides = useImageOverrides();
 
-  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(
-    null,
-  );
+  const [quickViewProduct, setQuickViewProduct] =
+    useState<DisplayProduct | null>(null);
   const [quickViewImage, setQuickViewImage] = useState<string>("");
 
-  const products = allProducts ?? [];
+  const isLoading = catsLoading || prodsLoading;
+
+  // Build override map for static products
+  const overrideMap = useMemo(() => {
+    const map: Record<
+      string,
+      { price?: bigint; description?: string; imageUrl?: string }
+    > = {};
+    if (overrides) {
+      for (const o of overrides) {
+        map[o.productId] = {
+          price: o.price ?? undefined,
+          description: o.description ?? undefined,
+          imageUrl: o.imageUrl ?? undefined,
+        };
+      }
+    }
+    return map;
+  }, [overrides]);
+
+  // Build category name map from dynamic categories
+  const categoryNameMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const cat of dynamicCategories ?? []) {
+      map[cat.id] = cat.name;
+    }
+    return map;
+  }, [dynamicCategories]);
+
+  // Convert dynamic products to DisplayProduct
+  const displayDynamic = useMemo(() => {
+    if (!dynamicProducts) return [];
+    return dynamicProducts
+      .filter((p) => p.isActive)
+      .map((p) =>
+        dynamicToDisplayProduct(
+          p,
+          categoryNameMap[p.categoryId] ?? p.categoryId,
+        ),
+      );
+  }, [dynamicProducts, categoryNameMap]);
+
+  // Convert static products to DisplayProduct (only if no dynamic products loaded, for backward compat)
+  const displayStatic = useMemo(() => {
+    if (displayDynamic.length > 0) return []; // hide static if dynamic exist
+    return (staticProducts ?? []).map((p) => {
+      const ov = overrideMap[p.id.toString()];
+      return toDisplayProduct(
+        p,
+        ov?.imageUrl ||
+          imageOverrides[p.id.toString()] ||
+          getProductImage(p, []),
+        ov?.price,
+        ov?.description,
+      );
+    });
+  }, [staticProducts, overrideMap, imageOverrides, displayDynamic.length]);
+
+  const allDisplayProducts = useMemo(
+    () => [...displayDynamic, ...displayStatic],
+    [displayDynamic, displayStatic],
+  );
+
+  // Build tabs: static fallback tabs or dynamic categories
+  const tabs = useMemo(() => {
+    const list: { value: string; label: string }[] = [
+      { value: ALL_TAB, label: "All Collections" },
+    ];
+    if (dynamicCategories && dynamicCategories.length > 0) {
+      for (const cat of dynamicCategories) {
+        list.push({ value: cat.id, label: cat.name });
+      }
+    } else {
+      // fallback static tabs
+      const seen = new Set<string>();
+      for (const p of allDisplayProducts) {
+        if (!seen.has(p.categoryId)) {
+          seen.add(p.categoryId);
+          list.push({ value: p.categoryId, label: p.categoryName });
+        }
+      }
+    }
+    return list;
+  }, [dynamicCategories, allDisplayProducts]);
 
   const filteredProducts = useMemo(() => {
-    if (activeTab === "All") return products;
-    return products.filter((p) => p.category === activeTab);
-  }, [products, activeTab]);
+    if (activeTab === ALL_TAB) return allDisplayProducts;
+    return allDisplayProducts.filter((p) => p.categoryId === activeTab);
+  }, [allDisplayProducts, activeTab]);
 
-  const getImage = (product: Product) => {
-    return (
-      imageOverrides[product.id.toString()] ?? getProductImage(product, [])
-    );
-  };
-
-  const handleQuickView = (product: Product, image: string) => {
+  const handleQuickView = (product: DisplayProduct, image: string) => {
     setQuickViewProduct(product);
     setQuickViewImage(image);
   };
@@ -56,7 +134,6 @@ export function ShopSection() {
   return (
     <section id="shop" className="py-20 bg-secondary/40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
         <motion.div
           className="text-center mb-12"
           initial={{ opacity: 0, y: 20 }}
@@ -96,7 +173,6 @@ export function ShopSection() {
           ))}
         </div>
 
-        {/* Product Grid */}
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {["s1", "s2", "s3", "s4", "s5", "s6"].map((key) => (
@@ -129,9 +205,12 @@ export function ShopSection() {
           >
             {filteredProducts.map((product, idx) => (
               <ProductCard
-                key={product.id.toString()}
+                key={product.id}
                 product={product}
-                image={getImage(product)}
+                image={
+                  product.imageUrl ??
+                  "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-1--1.jpeg"
+                }
                 index={idx + 1}
                 ocidScope="shop"
                 onQuickView={handleQuickView}
@@ -141,7 +220,6 @@ export function ShopSection() {
         )}
       </div>
 
-      {/* Quick View Modal */}
       <ProductQuickView
         product={quickViewProduct}
         image={quickViewImage}

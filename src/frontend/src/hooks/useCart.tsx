@@ -1,11 +1,18 @@
 import type React from "react";
-import { createContext, useContext, useReducer, useState } from "react";
-import type { Product } from "../backend.d";
+import { createContext, useContext, useReducer } from "react";
 
-export type ProductSize = "M" | "L" | "XL" | "XXL";
+export type ProductSize = "M" | "L" | "XL" | "XXL" | string;
+
+export interface CartProduct {
+  id: string;
+  name: string;
+  price: bigint;
+  category?: string;
+  description?: string;
+}
 
 export interface CartItem {
-  product: Product;
+  product: CartProduct;
   quantity: number;
   image: string;
   size: ProductSize;
@@ -17,10 +24,10 @@ interface CartState {
 }
 
 type CartAction =
-  | { type: "ADD_ITEM"; product: Product; image: string; size: ProductSize }
-  | { type: "REMOVE_ITEM"; productId: bigint; size: ProductSize }
-  | { type: "INCREMENT"; productId: bigint; size: ProductSize }
-  | { type: "DECREMENT"; productId: bigint; size: ProductSize }
+  | { type: "ADD_ITEM"; product: CartProduct; image: string; size: ProductSize }
+  | { type: "REMOVE_ITEM"; productId: string; size: ProductSize }
+  | { type: "INCREMENT"; productId: string; size: ProductSize }
+  | { type: "DECREMENT"; productId: string; size: ProductSize }
   | { type: "CLEAR_CART" }
   | { type: "OPEN_CART" }
   | { type: "CLOSE_CART" };
@@ -103,10 +110,10 @@ interface CartContextValue {
   isOpen: boolean;
   totalItems: number;
   totalPrice: bigint;
-  addItem: (product: Product, image: string, size: ProductSize) => void;
-  removeItem: (productId: bigint, size: ProductSize) => void;
-  increment: (productId: bigint, size: ProductSize) => void;
-  decrement: (productId: bigint, size: ProductSize) => void;
+  addItem: (product: CartProduct, image: string, size: ProductSize) => void;
+  removeItem: (productId: string, size: ProductSize) => void;
+  increment: (productId: string, size: ProductSize) => void;
+  decrement: (productId: string, size: ProductSize) => void;
   clearCart: () => void;
   openCart: () => void;
   closeCart: () => void;

@@ -8,6 +8,17 @@
 
 import { IDL } from '@icp-sdk/core/candid';
 
+export const _CaffeineStorageCreateCertificateResult = IDL.Record({
+  'method' : IDL.Text,
+  'blob_hash' : IDL.Text,
+});
+export const _CaffeineStorageRefillInformation = IDL.Record({
+  'proposed_top_up_amount' : IDL.Opt(IDL.Nat),
+});
+export const _CaffeineStorageRefillResult = IDL.Record({
+  'success' : IDL.Opt(IDL.Bool),
+  'topped_up_amount' : IDL.Opt(IDL.Nat),
+});
 export const SaleItem = IDL.Record({
   'size' : IDL.Text,
   'productId' : IDL.Text,
@@ -54,6 +65,28 @@ export const CostPriceEntry = IDL.Record({
   'productId' : IDL.Text,
   'costPrice' : IDL.Float64,
 });
+export const DynamicCategory = IDL.Record({
+  'id' : IDL.Text,
+  'displayOrder' : IDL.Nat,
+  'name' : IDL.Text,
+});
+export const DynamicProduct = IDL.Record({
+  'id' : IDL.Text,
+  'categoryId' : IDL.Text,
+  'displayOrder' : IDL.Nat,
+  'name' : IDL.Text,
+  'description' : IDL.Text,
+  'isActive' : IDL.Bool,
+  'sizes' : IDL.Vec(IDL.Text),
+  'imageUrl' : IDL.Opt(IDL.Text),
+  'price' : IDL.Nat,
+});
+export const ProductOverride = IDL.Record({
+  'description' : IDL.Opt(IDL.Text),
+  'productId' : IDL.Text,
+  'imageUrl' : IDL.Opt(IDL.Text),
+  'price' : IDL.Opt(IDL.Nat),
+});
 export const StockEntry = IDL.Record({
   'size' : IDL.Text,
   'productId' : IDL.Text,
@@ -63,37 +96,118 @@ export const StockEntry = IDL.Record({
 });
 
 export const idlService = IDL.Service({
+  '_caffeineStorageBlobIsLive' : IDL.Func(
+      [IDL.Vec(IDL.Nat8)],
+      [IDL.Bool],
+      ['query'],
+    ),
+  '_caffeineStorageBlobsToDelete' : IDL.Func(
+      [],
+      [IDL.Vec(IDL.Vec(IDL.Nat8))],
+      ['query'],
+    ),
+  '_caffeineStorageConfirmBlobDeletion' : IDL.Func(
+      [IDL.Vec(IDL.Vec(IDL.Nat8))],
+      [],
+      [],
+    ),
+  '_caffeineStorageCreateCertificate' : IDL.Func(
+      [IDL.Text],
+      [_CaffeineStorageCreateCertificateResult],
+      [],
+    ),
+  '_caffeineStorageRefillCashier' : IDL.Func(
+      [IDL.Opt(_CaffeineStorageRefillInformation)],
+      [_CaffeineStorageRefillResult],
+      [],
+    ),
+  '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
+  'addDynamicCategory' : IDL.Func([IDL.Text], [IDL.Text], []),
+  'addDynamicProduct' : IDL.Func(
+      [
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Nat,
+        IDL.Vec(IDL.Text),
+        IDL.Opt(IDL.Text),
+      ],
+      [IDL.Text],
+      [],
+    ),
   'addSale' : IDL.Func(
       [IDL.Text, IDL.Text, IDL.Text, IDL.Vec(SaleItem), IDL.Nat],
       [],
       [],
     ),
   'deductStock' : IDL.Func([IDL.Text, IDL.Text, IDL.Nat], [], []),
+  'deleteDynamicCategory' : IDL.Func([IDL.Text], [IDL.Bool], []),
+  'deleteDynamicProduct' : IDL.Func([IDL.Text], [IDL.Bool], []),
   'getAllContactMessages' : IDL.Func([], [IDL.Vec(ContactMessage)], ['query']),
   'getAllProducts' : IDL.Func([], [IDL.Vec(Product)], ['query']),
   'getAllSales' : IDL.Func([], [IDL.Vec(Sale)], ['query']),
   'getAnalytics' : IDL.Func([], [IDL.Vec(VisitRecord)], ['query']),
   'getCostPrices' : IDL.Func([], [IDL.Vec(CostPriceEntry)], ['query']),
+  'getDynamicCategories' : IDL.Func([], [IDL.Vec(DynamicCategory)], ['query']),
+  'getDynamicProducts' : IDL.Func([], [IDL.Vec(DynamicProduct)], ['query']),
+  'getDynamicProductsByCategory' : IDL.Func(
+      [IDL.Text],
+      [IDL.Vec(DynamicProduct)],
+      ['query'],
+    ),
   'getFeaturedProducts' : IDL.Func([], [IDL.Vec(Product)], ['query']),
   'getProductById' : IDL.Func([ProductId], [Product], ['query']),
+  'getProductOverrides' : IDL.Func([], [IDL.Vec(ProductOverride)], ['query']),
   'getProductsByCategory' : IDL.Func([Category], [IDL.Vec(Product)], ['query']),
   'getStock' : IDL.Func([], [IDL.Vec(StockEntry)], ['query']),
   'init' : IDL.Func([], [], []),
   'initStock' : IDL.Func([IDL.Vec(StockEntry)], [], []),
   'recordVisit' : IDL.Func([IDL.Text], [], []),
   'resetAllStock' : IDL.Func([], [], []),
+  'setCategoryOrder' : IDL.Func([IDL.Text, IDL.Nat], [], []),
   'setCostPrice' : IDL.Func([IDL.Text, IDL.Float64], [], []),
+  'setDynamicProductOrder' : IDL.Func([IDL.Text, IDL.Nat], [], []),
+  'setProductOverride' : IDL.Func(
+      [IDL.Text, IDL.Opt(IDL.Nat), IDL.Opt(IDL.Text), IDL.Opt(IDL.Text)],
+      [],
+      [],
+    ),
   'setStockEntry' : IDL.Func(
       [IDL.Text, IDL.Text, IDL.Text, IDL.Text, IDL.Nat],
       [],
       [],
     ),
   'submitContactMessage' : IDL.Func([IDL.Text, IDL.Text, IDL.Text], [], []),
+  'updateDynamicCategory' : IDL.Func([IDL.Text, IDL.Text], [IDL.Bool], []),
+  'updateDynamicProduct' : IDL.Func(
+      [
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Nat,
+        IDL.Vec(IDL.Text),
+        IDL.Opt(IDL.Text),
+        IDL.Bool,
+      ],
+      [IDL.Bool],
+      [],
+    ),
 });
 
 export const idlInitArgs = [];
 
 export const idlFactory = ({ IDL }) => {
+  const _CaffeineStorageCreateCertificateResult = IDL.Record({
+    'method' : IDL.Text,
+    'blob_hash' : IDL.Text,
+  });
+  const _CaffeineStorageRefillInformation = IDL.Record({
+    'proposed_top_up_amount' : IDL.Opt(IDL.Nat),
+  });
+  const _CaffeineStorageRefillResult = IDL.Record({
+    'success' : IDL.Opt(IDL.Bool),
+    'topped_up_amount' : IDL.Opt(IDL.Nat),
+  });
   const SaleItem = IDL.Record({
     'size' : IDL.Text,
     'productId' : IDL.Text,
@@ -140,6 +254,28 @@ export const idlFactory = ({ IDL }) => {
     'productId' : IDL.Text,
     'costPrice' : IDL.Float64,
   });
+  const DynamicCategory = IDL.Record({
+    'id' : IDL.Text,
+    'displayOrder' : IDL.Nat,
+    'name' : IDL.Text,
+  });
+  const DynamicProduct = IDL.Record({
+    'id' : IDL.Text,
+    'categoryId' : IDL.Text,
+    'displayOrder' : IDL.Nat,
+    'name' : IDL.Text,
+    'description' : IDL.Text,
+    'isActive' : IDL.Bool,
+    'sizes' : IDL.Vec(IDL.Text),
+    'imageUrl' : IDL.Opt(IDL.Text),
+    'price' : IDL.Nat,
+  });
+  const ProductOverride = IDL.Record({
+    'description' : IDL.Opt(IDL.Text),
+    'productId' : IDL.Text,
+    'imageUrl' : IDL.Opt(IDL.Text),
+    'price' : IDL.Opt(IDL.Nat),
+  });
   const StockEntry = IDL.Record({
     'size' : IDL.Text,
     'productId' : IDL.Text,
@@ -149,12 +285,53 @@ export const idlFactory = ({ IDL }) => {
   });
   
   return IDL.Service({
+    '_caffeineStorageBlobIsLive' : IDL.Func(
+        [IDL.Vec(IDL.Nat8)],
+        [IDL.Bool],
+        ['query'],
+      ),
+    '_caffeineStorageBlobsToDelete' : IDL.Func(
+        [],
+        [IDL.Vec(IDL.Vec(IDL.Nat8))],
+        ['query'],
+      ),
+    '_caffeineStorageConfirmBlobDeletion' : IDL.Func(
+        [IDL.Vec(IDL.Vec(IDL.Nat8))],
+        [],
+        [],
+      ),
+    '_caffeineStorageCreateCertificate' : IDL.Func(
+        [IDL.Text],
+        [_CaffeineStorageCreateCertificateResult],
+        [],
+      ),
+    '_caffeineStorageRefillCashier' : IDL.Func(
+        [IDL.Opt(_CaffeineStorageRefillInformation)],
+        [_CaffeineStorageRefillResult],
+        [],
+      ),
+    '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
+    'addDynamicCategory' : IDL.Func([IDL.Text], [IDL.Text], []),
+    'addDynamicProduct' : IDL.Func(
+        [
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Nat,
+          IDL.Vec(IDL.Text),
+          IDL.Opt(IDL.Text),
+        ],
+        [IDL.Text],
+        [],
+      ),
     'addSale' : IDL.Func(
         [IDL.Text, IDL.Text, IDL.Text, IDL.Vec(SaleItem), IDL.Nat],
         [],
         [],
       ),
     'deductStock' : IDL.Func([IDL.Text, IDL.Text, IDL.Nat], [], []),
+    'deleteDynamicCategory' : IDL.Func([IDL.Text], [IDL.Bool], []),
+    'deleteDynamicProduct' : IDL.Func([IDL.Text], [IDL.Bool], []),
     'getAllContactMessages' : IDL.Func(
         [],
         [IDL.Vec(ContactMessage)],
@@ -164,8 +341,20 @@ export const idlFactory = ({ IDL }) => {
     'getAllSales' : IDL.Func([], [IDL.Vec(Sale)], ['query']),
     'getAnalytics' : IDL.Func([], [IDL.Vec(VisitRecord)], ['query']),
     'getCostPrices' : IDL.Func([], [IDL.Vec(CostPriceEntry)], ['query']),
+    'getDynamicCategories' : IDL.Func(
+        [],
+        [IDL.Vec(DynamicCategory)],
+        ['query'],
+      ),
+    'getDynamicProducts' : IDL.Func([], [IDL.Vec(DynamicProduct)], ['query']),
+    'getDynamicProductsByCategory' : IDL.Func(
+        [IDL.Text],
+        [IDL.Vec(DynamicProduct)],
+        ['query'],
+      ),
     'getFeaturedProducts' : IDL.Func([], [IDL.Vec(Product)], ['query']),
     'getProductById' : IDL.Func([ProductId], [Product], ['query']),
+    'getProductOverrides' : IDL.Func([], [IDL.Vec(ProductOverride)], ['query']),
     'getProductsByCategory' : IDL.Func(
         [Category],
         [IDL.Vec(Product)],
@@ -176,13 +365,34 @@ export const idlFactory = ({ IDL }) => {
     'initStock' : IDL.Func([IDL.Vec(StockEntry)], [], []),
     'recordVisit' : IDL.Func([IDL.Text], [], []),
     'resetAllStock' : IDL.Func([], [], []),
+    'setCategoryOrder' : IDL.Func([IDL.Text, IDL.Nat], [], []),
     'setCostPrice' : IDL.Func([IDL.Text, IDL.Float64], [], []),
+    'setDynamicProductOrder' : IDL.Func([IDL.Text, IDL.Nat], [], []),
+    'setProductOverride' : IDL.Func(
+        [IDL.Text, IDL.Opt(IDL.Nat), IDL.Opt(IDL.Text), IDL.Opt(IDL.Text)],
+        [],
+        [],
+      ),
     'setStockEntry' : IDL.Func(
         [IDL.Text, IDL.Text, IDL.Text, IDL.Text, IDL.Nat],
         [],
         [],
       ),
     'submitContactMessage' : IDL.Func([IDL.Text, IDL.Text, IDL.Text], [], []),
+    'updateDynamicCategory' : IDL.Func([IDL.Text, IDL.Text], [IDL.Bool], []),
+    'updateDynamicProduct' : IDL.Func(
+        [
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Nat,
+          IDL.Vec(IDL.Text),
+          IDL.Opt(IDL.Text),
+          IDL.Bool,
+        ],
+        [IDL.Bool],
+        [],
+      ),
   });
 };
 

@@ -3,38 +3,18 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ShoppingBag, X } from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
-import type { Product } from "../backend.d";
-import { Category } from "../backend.d";
-import type { ProductSize } from "../hooks/useCart";
+import type { CartProduct, ProductSize } from "../hooks/useCart";
 import { useCart } from "../hooks/useCart";
-import {
-  formatPrice,
-  getSizesForCategory,
-  isSizeOutOfStock,
-  useStock,
-} from "../hooks/useQueries";
+import type { DisplayProduct } from "../hooks/useQueries";
+import { isSizeOutOfStock, useStock } from "../hooks/useQueries";
 import { SizeChartModal } from "./SizeChartModal";
 
 interface ProductQuickViewProps {
-  product: Product | null;
+  product: DisplayProduct | null;
   image: string;
   open: boolean;
   onClose: () => void;
 }
-
-const categoryColors: Record<string, string> = {
-  [Category.Sarees]: "bg-magenta/10 text-magenta border-magenta/30",
-  [Category.CoordSets]: "bg-gold/10 text-gold-dark border-gold/30",
-  [Category.Kurties]: "bg-crimson/10 text-crimson border-crimson/30",
-  [Category.NightWear]: "bg-indigo-100 text-indigo-700 border-indigo-200",
-};
-
-const categoryLabels: Record<string, string> = {
-  [Category.Sarees]: "Kurti Set",
-  [Category.CoordSets]: "Co-ord Set",
-  [Category.Kurties]: "Suit",
-  [Category.NightWear]: "Night Wear",
-};
 
 export function ProductQuickView({
   product,
@@ -43,26 +23,25 @@ export function ProductQuickView({
   onClose,
 }: ProductQuickViewProps) {
   const { addItem } = useCart();
-  const [selectedSize, setSelectedSize] = useState<ProductSize | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [showSizeError, setShowSizeError] = useState(false);
   const [showSizeChart, setShowSizeChart] = useState(false);
   const { data: stockData } = useStock();
 
   if (!product) return null;
 
-  const categoryLabel = categoryLabels[product.category] ?? product.category;
-  const categoryColor =
-    categoryColors[product.category] ??
-    "bg-primary/10 text-primary border-primary/30";
-
-  const availableSizes = getSizesForCategory(product.category);
-
   const handleAddToCart = () => {
     if (!selectedSize) {
       setShowSizeError(true);
       return;
     }
-    addItem(product, image, selectedSize);
+    const cartProduct: CartProduct = {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      category: product.categoryName,
+    };
+    addItem(cartProduct, image, selectedSize as ProductSize);
     setSelectedSize(null);
     setShowSizeError(false);
     onClose();
@@ -83,12 +62,10 @@ export function ProductQuickView({
           className="p-0 overflow-hidden border border-border rounded-none max-w-[calc(100%-2rem)] sm:max-w-3xl bg-card gap-0"
           aria-describedby={undefined}
         >
-          {/* Visually hidden dialog title for accessibility */}
           <DialogTitle className="sr-only">
             {product.name} — Quick View
           </DialogTitle>
 
-          {/* Close Button */}
           <button
             type="button"
             data-ocid="product.quickview.close_button"
@@ -100,7 +77,6 @@ export function ProductQuickView({
           </button>
 
           <div className="flex flex-col sm:flex-row min-h-0">
-            {/* ── Image panel ── */}
             <motion.div
               className="relative w-full sm:w-[45%] shrink-0 aspect-[3/4] sm:aspect-auto sm:min-h-[480px] bg-secondary overflow-hidden"
               initial={{ opacity: 0, x: -20 }}
@@ -113,25 +89,14 @@ export function ProductQuickView({
                 className="w-full h-full object-cover object-top"
                 loading="eager"
               />
-              {/* Gold shimmer overlay at bottom */}
               <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-charcoal/30 to-transparent pointer-events-none" />
-
-              {/* Badges over image */}
-              <div className="absolute top-3 left-3 flex flex-col gap-1.5">
-                <span
-                  className={`text-xs font-medium px-2.5 py-1 rounded-full border backdrop-blur-sm ${categoryColor}`}
-                >
-                  {categoryLabel}
+              <div className="absolute top-3 left-3">
+                <span className="text-xs font-medium px-2.5 py-1 rounded-full border backdrop-blur-sm bg-gold/10 text-gold-dark border-gold/30">
+                  {product.categoryName}
                 </span>
-                {product.isFeatured && (
-                  <span className="text-xs font-medium px-2.5 py-1 rounded-full border gold-gradient text-charcoal backdrop-blur-sm">
-                    ✶ Featured
-                  </span>
-                )}
               </div>
             </motion.div>
 
-            {/* ── Details panel ── */}
             <motion.div
               className="flex flex-col flex-1 p-6 sm:p-8 justify-between overflow-y-auto max-h-[60vh] sm:max-h-none"
               initial={{ opacity: 0, x: 20 }}
@@ -139,48 +104,34 @@ export function ProductQuickView({
               transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
             >
               <div>
-                {/* Decorative top rule */}
                 <div className="section-divider mb-5" />
-
-                {/* Eyebrow */}
                 <p className="text-gold text-[10px] uppercase tracking-[0.35em] font-medium mb-2">
                   Divine Collection
                 </p>
-
-                {/* Product name */}
                 <h2 className="font-display text-2xl sm:text-3xl font-bold text-card-foreground leading-tight mb-3">
                   {product.name}
                 </h2>
-
-                {/* Category pill + Price row */}
                 <div className="flex items-center gap-3 mb-5">
-                  <span
-                    className={`inline-block text-xs font-medium px-3 py-1 rounded-full border ${categoryColor}`}
-                  >
-                    {categoryLabel}
+                  <span className="inline-block text-xs font-medium px-3 py-1 rounded-full border bg-gold/10 text-gold-dark border-gold/30">
+                    {product.categoryName}
                   </span>
                   {Number(product.price) > 0 && (
                     <span className="text-primary font-bold text-lg">
-                      {formatPrice(product.price)}
+                      ₹{Number(product.price).toLocaleString("en-IN")}/-
                     </span>
                   )}
                 </div>
-
-                {/* Description */}
                 <p className="text-muted-foreground text-sm leading-relaxed mb-6">
                   {product.description}
                 </p>
-
-                {/* Divider */}
                 <div className="section-divider mb-5" />
 
-                {/* Size selector */}
                 <div className="mb-6">
                   <p className="text-xs font-semibold uppercase tracking-wider text-card-foreground mb-3">
                     Select Size
                   </p>
                   <div className="flex gap-2 flex-wrap">
-                    {availableSizes.map((size) => {
+                    {product.sizes.map((size) => {
                       const outOfStock = isSizeOutOfStock(
                         stockData as
                           | Array<{
@@ -189,7 +140,7 @@ export function ProductQuickView({
                               quantity: bigint;
                             }>
                           | undefined,
-                        product.id.toString(),
+                        product.id,
                         size,
                       );
                       return (
@@ -221,7 +172,6 @@ export function ProductQuickView({
                       Please select a size before adding to cart
                     </p>
                   )}
-                  {/* Size Chart link */}
                   <button
                     type="button"
                     data-ocid="product.quickview.sizechart.open_modal_button"
@@ -233,7 +183,6 @@ export function ProductQuickView({
                 </div>
               </div>
 
-              {/* CTA */}
               <div className="flex flex-col gap-3">
                 <Button
                   data-ocid="product.quickview.add_button"

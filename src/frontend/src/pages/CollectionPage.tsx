@@ -4,20 +4,21 @@ import { ArrowLeft, ChevronRight } from "lucide-react";
 import { motion } from "motion/react";
 import { useMemo, useState } from "react";
 import { Category } from "../backend.d";
-import type { Product } from "../backend.d";
 import { Footer } from "../components/Footer";
 import { ProductCard } from "../components/ProductCard";
 import { ProductQuickView } from "../components/ProductQuickView";
+import type { DisplayProduct } from "../hooks/useQueries";
 import {
   coord1Img,
   getProductImage,
   kurtiHeroImg,
   suit1Img,
+  toDisplayProduct,
   useAllProducts,
   useImageOverrides,
+  useProductOverrides,
 } from "../hooks/useQueries";
 
-// ── Per-collection metadata ──────────────────────────────────────────────────────────────────────────────
 const COLLECTION_META: Record<
   string,
   {
@@ -57,31 +58,57 @@ const COLLECTION_META: Record<
   },
 };
 
-// ── Props ──────────────────────────────────────────────────────────────────────────────────────
 export interface CollectionPageProps {
   category: Category;
   onNavigateHome: (section?: string) => void;
 }
 
-// ── Page content (no CartProvider — expects it from App.tsx) ───────────────────────────────────────
 export function CollectionPageContent({
   category,
   onNavigateHome,
 }: CollectionPageProps) {
   const { data: allProducts, isLoading } = useAllProducts();
   const imageOverrides = useImageOverrides();
+  const { data: overrides } = useProductOverrides();
 
-  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(
-    null,
-  );
+  const [quickViewProduct, setQuickViewProduct] =
+    useState<DisplayProduct | null>(null);
   const [quickViewImage, setQuickViewImage] = useState<string>("");
 
-  const products = allProducts ?? [];
+  const overrideMap = useMemo(() => {
+    const map: Record<
+      string,
+      { price?: bigint; description?: string; imageUrl?: string }
+    > = {};
+    if (overrides) {
+      for (const o of overrides) {
+        map[o.productId] = {
+          price: o.price ?? undefined,
+          description: o.description ?? undefined,
+          imageUrl: o.imageUrl ?? undefined,
+        };
+      }
+    }
+    return map;
+  }, [overrides]);
 
-  const categoryProducts = useMemo(
-    () => products.filter((p) => p.category === category),
-    [products, category],
-  );
+  const categoryProducts = useMemo(() => {
+    return (allProducts ?? []).filter((p) => p.category === category);
+  }, [allProducts, category]);
+
+  const displayProducts = useMemo(() => {
+    return categoryProducts.map((p) => {
+      const ov = overrideMap[p.id.toString()];
+      return toDisplayProduct(
+        p,
+        ov?.imageUrl ||
+          imageOverrides[p.id.toString()] ||
+          getProductImage(p, categoryProducts),
+        ov?.price,
+        ov?.description,
+      );
+    });
+  }, [categoryProducts, overrideMap, imageOverrides]);
 
   const meta = COLLECTION_META[category as string] ?? {
     title: "Collection",
@@ -92,11 +119,7 @@ export function CollectionPageContent({
       "linear-gradient(135deg, oklch(0.18 0.06 25 / 0.88) 0%, oklch(0.28 0.08 45 / 0.70) 100%)",
   };
 
-  const getImage = (product: Product) =>
-    imageOverrides[product.id.toString()] ??
-    getProductImage(product, categoryProducts);
-
-  const handleQuickView = (product: Product, image: string) => {
+  const handleQuickView = (product: DisplayProduct, image: string) => {
     setQuickViewProduct(product);
     setQuickViewImage(image);
   };
@@ -108,7 +131,6 @@ export function CollectionPageContent({
 
   return (
     <>
-      {/* ── Collection Hero ── */}
       <div className="relative h-72 sm:h-96 overflow-hidden">
         <img
           src={meta.heroImage}
@@ -120,7 +142,6 @@ export function CollectionPageContent({
           className="absolute inset-0"
           style={{ background: meta.heroGradient }}
         />
-        {/* Decorative glow */}
         <div
           className="absolute inset-0 opacity-15"
           style={{
@@ -128,9 +149,7 @@ export function CollectionPageContent({
               "radial-gradient(circle at 70% 30%, oklch(0.74 0.12 76 / 0.5) 0%, transparent 60%)",
           }}
         />
-
         <div className="absolute inset-0 flex flex-col justify-end pb-10 px-4 sm:px-8 lg:px-16">
-          {/* Breadcrumb */}
           <motion.nav
             aria-label="Breadcrumb"
             className="flex items-center gap-1.5 text-white/60 text-xs mb-4"
@@ -151,7 +170,6 @@ export function CollectionPageContent({
             <ChevronRight className="h-3 w-3" />
             <span className="text-gold font-medium">{meta.title}</span>
           </motion.nav>
-
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -170,9 +188,7 @@ export function CollectionPageContent({
         </div>
       </div>
 
-      {/* ── Main content ── */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Description + Back button row */}
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-10">
           <motion.div
             className="max-w-2xl"
@@ -188,7 +204,6 @@ export function CollectionPageContent({
               {isLoading ? "—" : `${categoryProducts.length} styles available`}
             </p>
           </motion.div>
-
           <motion.div
             initial={{ opacity: 0, x: 10 }}
             animate={{ opacity: 1, x: 0 }}
@@ -206,7 +221,6 @@ export function CollectionPageContent({
           </motion.div>
         </div>
 
-        {/* Product grid */}
         {isLoading ? (
           <div
             data-ocid="collection.loading_state"
@@ -235,11 +249,11 @@ export function CollectionPageContent({
             animate={{ opacity: 1 }}
             transition={{ duration: 0.4 }}
           >
-            {categoryProducts.map((product, idx) => (
+            {displayProducts.map((product, idx) => (
               <ProductCard
-                key={product.id.toString()}
+                key={product.id}
                 product={product}
-                image={getImage(product)}
+                image={product.imageUrl ?? suit1Img}
                 index={idx + 1}
                 ocidScope="collection"
                 onQuickView={handleQuickView}
@@ -251,7 +265,6 @@ export function CollectionPageContent({
 
       <Footer onNavigate={(section) => onNavigateHome(section)} />
 
-      {/* Quick View Modal */}
       <ProductQuickView
         product={quickViewProduct}
         image={quickViewImage}

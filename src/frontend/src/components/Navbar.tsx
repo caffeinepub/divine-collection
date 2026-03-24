@@ -3,11 +3,11 @@ import { ChevronDown, Menu, ShoppingBag, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { useCart } from "../hooks/useCart";
+import { useDynamicCategories } from "../hooks/useQueries";
 
 interface NavbarProps {
   activeSection: string;
   onNavigate: (section: string) => void;
-  /** If true, nav links point back to home page */
   isCollectionPage?: boolean;
   onNavigateToCollection?: (slug: string) => void;
 }
@@ -19,7 +19,8 @@ const navLinks = [
   { id: "contact", label: "Contact" },
 ];
 
-const collections = [
+// Static fallback collections
+const STATIC_COLLECTIONS = [
   { label: "Suit Sets", slug: "suit-sets" },
   { label: "Kurti Sets", slug: "kurti-sets" },
   { label: "Co-ord Sets", slug: "coord-sets" },
@@ -36,16 +37,14 @@ export function Navbar({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [collectionsOpen, setCollectionsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { data: dynamicCategories } = useDynamicCategories();
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 60);
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 60);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -66,12 +65,16 @@ export function Navbar({
   };
 
   const handleCollection = (slug: string) => {
-    if (onNavigateToCollection) {
-      onNavigateToCollection(slug);
-    }
+    if (onNavigateToCollection) onNavigateToCollection(slug);
     setMobileMenuOpen(false);
     setCollectionsOpen(false);
   };
+
+  // Use dynamic categories if available, else fall back to static
+  const collections =
+    dynamicCategories && dynamicCategories.length > 0
+      ? dynamicCategories.map((c) => ({ label: c.name, slug: c.id }))
+      : STATIC_COLLECTIONS;
 
   const textColor =
     isScrolled || isCollectionPage
@@ -95,7 +98,6 @@ export function Navbar({
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 lg:h-20">
-            {/* Logo */}
             <button
               type="button"
               data-ocid="nav.home_link"
@@ -109,7 +111,6 @@ export function Navbar({
               />
             </button>
 
-            {/* Desktop Nav Links */}
             <nav
               className="hidden md:flex items-center gap-1"
               aria-label="Main navigation"
@@ -136,7 +137,6 @@ export function Navbar({
                 </button>
               ))}
 
-              {/* Collections dropdown */}
               <div className="relative" ref={dropdownRef}>
                 <button
                   type="button"
@@ -172,7 +172,7 @@ export function Navbar({
                         <button
                           key={col.slug}
                           type="button"
-                          data-ocid={`nav.${col.slug}_link`}
+                          data-ocid={`nav.${col.slug.replace(/[^a-z0-9]/gi, "_").toLowerCase()}_link`}
                           onClick={() => handleCollection(col.slug)}
                           className="w-full text-left px-4 py-3 text-sm text-charcoal hover:text-primary hover:bg-secondary transition-colors border-b border-border/50 last:border-0"
                         >
@@ -185,7 +185,6 @@ export function Navbar({
               </div>
             </nav>
 
-            {/* Cart + Mobile Menu */}
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -210,7 +209,6 @@ export function Navbar({
                 )}
               </button>
 
-              {/* Mobile hamburger */}
               <button
                 type="button"
                 className={`md:hidden p-2 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold ${
@@ -232,7 +230,6 @@ export function Navbar({
         </div>
       </motion.header>
 
-      {/* Mobile Menu */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
@@ -259,7 +256,6 @@ export function Navbar({
                 </button>
               ))}
 
-              {/* Collections divider + links */}
               <div className="pt-2 pb-1">
                 <p className="px-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
                   Collections
@@ -268,7 +264,7 @@ export function Navbar({
                   <button
                     key={col.slug}
                     type="button"
-                    data-ocid={`nav.${col.slug}_link`}
+                    data-ocid={`nav.${col.slug.replace(/[^a-z0-9]/gi, "_").toLowerCase()}_link`}
                     onClick={() => handleCollection(col.slug)}
                     className="w-full text-left px-6 py-2.5 rounded-lg text-sm font-medium text-charcoal hover:text-primary hover:bg-secondary transition-colors"
                   >

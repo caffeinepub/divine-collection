@@ -1,5 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Category, type Product } from "../backend.d";
+import {
+  Category,
+  type DynamicCategory,
+  type DynamicProduct,
+  type Product,
+} from "../backend.d";
 import type { ProductOverride } from "../backend.d";
 import { useActor } from "./useActor";
 
@@ -8,10 +13,22 @@ interface ActorWithOverrides {
   getProductOverrides(): Promise<Array<ProductOverride>>;
 }
 
-export type { Product, Category };
+export type { Product, Category, DynamicProduct, DynamicCategory };
+
+// ── Normalised display type used by product card / quick-view ─────────────────
+export interface DisplayProduct {
+  id: string;
+  name: string;
+  description: string;
+  price: bigint;
+  categoryId: string;
+  categoryName: string;
+  sizes: string[];
+  imageUrl?: string;
+  displayOrder: number;
+}
 
 // ── Static image paths (served from public/assets/uploads/) ──────────────────
-// Using string literals so the Caffeine build scanner preserves these files.
 const suit1Img =
   "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-1--1.jpeg";
 const suit2Img = "/assets/uploads/ChatGPT-Image-Mar-11-2026-05_41_46-PM-1.png";
@@ -33,17 +50,15 @@ export const coord1Img =
   "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.45-PM-1--1.jpeg";
 export const kurtiHeroImg =
   "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-1.jpeg";
-export const suit1ImgExport = suit1Img;
 export const sizeChartImg =
   "/assets/uploads/WhatsApp-Image-2026-03-09-at-10.34.16-PM-1.jpeg";
 
 // Export suit1Img for use in CollectionPage hero
 export { suit1Img };
+export const suit1ImgExport = suit1Img;
 
 /**
  * The single source of truth for all products in Divine Collection.
- * The backend canister contains stale data, so we bypass it entirely
- * and serve this static catalog directly to every product hook.
  */
 export const CATALOG_PRODUCTS: Product[] = [
   // ── Kurti Sets (Category.Sarees repurposed) ────────────────────────────────
@@ -141,6 +156,89 @@ export const CATALOG_PRODUCTS: Product[] = [
   },
 ];
 
+// ── Static-product image helpers ──────────────────────────────────────────────
+
+const SUIT_IMAGE_BY_ID: Record<string, string> = {
+  "7": suit1Img,
+  "8": suit2Img,
+  "9": suit3Img,
+  "16": suit4Img,
+  "17": suit5Img,
+  "18": suit6Img,
+};
+
+const KURTI_IMAGE_BY_ID: Record<string, string> = {
+  "21": kurti1Img,
+  "22": kurti2Img,
+  "23": kurti3Img,
+};
+
+const COORD_IMAGE_BY_ID: Record<string, string> = {
+  "4": coord1Img,
+};
+
+export function getProductImage(
+  product: Product,
+  _allProductsInCategory: Product[],
+): string {
+  const key = product.id.toString();
+  switch (product.category) {
+    case Category.Kurties:
+      return SUIT_IMAGE_BY_ID[key] ?? suit1Img;
+    case Category.Sarees:
+      return KURTI_IMAGE_BY_ID[key] ?? kurtiHeroImg;
+    case Category.CoordSets:
+      return COORD_IMAGE_BY_ID[key] ?? coord1Img;
+    default:
+      return suit1Img;
+  }
+}
+
+const CATEGORY_NAMES: Record<string, string> = {
+  [Category.Sarees]: "Kurti Sets",
+  [Category.CoordSets]: "Co-ord Sets",
+  [Category.Kurties]: "Suit Sets",
+};
+
+/** Convert a static Product + override to DisplayProduct */
+export function toDisplayProduct(
+  product: Product,
+  imageOverride?: string,
+  priceOverride?: bigint,
+  descriptionOverride?: string,
+): DisplayProduct {
+  return {
+    id: product.id.toString(),
+    name: product.name,
+    description: descriptionOverride ?? product.description,
+    price: priceOverride ?? product.price,
+    categoryId: product.category as string,
+    categoryName:
+      CATEGORY_NAMES[product.category as string] ?? product.category,
+    sizes: ["M", "L", "XL", "XXL"],
+    imageUrl: imageOverride || getProductImage(product, []),
+    displayOrder: 0,
+  };
+}
+
+/** Convert a DynamicProduct + category name to DisplayProduct */
+export function dynamicToDisplayProduct(
+  dp: DynamicProduct,
+  categoryName: string,
+): DisplayProduct {
+  return {
+    id: dp.id,
+    name: dp.name,
+    description: dp.description,
+    price: dp.price,
+    categoryId: dp.categoryId,
+    categoryName,
+    sizes: dp.sizes,
+    imageUrl: dp.imageUrl,
+    displayOrder: Number(dp.displayOrder),
+  };
+}
+
 // ── Product Overrides ─────────────────────────────────────────────────────────
 
 export function useProductOverrides() {
@@ -155,30 +253,33 @@ export function useProductOverrides() {
     staleTime: 30_000,
   });
 }
+
 export function useImageOverrides(): Record<string, string> {
   const { data: overrides } = useProductOverrides();
   const map: Record<string, string> = {};
   if (overrides) {
     for (const o of overrides) {
-      if (o.imageUrl.length > 0 && o.imageUrl[0]) {
-        map[o.productId] = o.imageUrl[0] as string;
+      if (o.imageUrl) {
+        map[o.productId] = o.imageUrl;
       }
     }
   }
   return map;
 }
 
-/** Returns all products merged with any admin overrides for price and description. */
+/** Returns all STATIC products merged with admin overrides. */
 export function useAllProducts() {
   const { data: overrides } = useProductOverrides();
-  const overrideMap: Record<string, { price?: bigint; description?: string }> =
-    {};
+  const overrideMap: Record<
+    string,
+    { price?: bigint; description?: string; imageUrl?: string }
+  > = {};
   if (overrides) {
     for (const o of overrides) {
       overrideMap[o.productId] = {
-        price: o.price.length > 0 ? (o.price[0] as bigint) : undefined,
-        description:
-          o.description.length > 0 ? (o.description[0] as string) : undefined,
+        price: o.price ?? undefined,
+        description: o.description ?? undefined,
+        imageUrl: o.imageUrl ?? undefined,
       };
     }
   }
@@ -194,7 +295,7 @@ export function useAllProducts() {
   return { data: merged, isLoading: false };
 }
 
-/** Returns only featured products, with overrides applied. */
+/** Returns only featured products (static), with overrides applied. */
 export function useFeaturedProducts() {
   const { data: all } = useAllProducts();
   return {
@@ -203,13 +304,183 @@ export function useFeaturedProducts() {
   };
 }
 
-/** Returns products for a given category, with overrides applied. */
-export function useProductsByCategory(category: Category) {
-  const { data: all } = useAllProducts();
-  return {
-    data: (all ?? []).filter((p) => p.category === category),
-    isLoading: false,
-  };
+// ── Dynamic categories ────────────────────────────────────────────────────────
+
+export function useDynamicCategories() {
+  const { actor, isFetching } = useActor();
+  return useQuery<DynamicCategory[]>({
+    queryKey: ["dynamic-categories"],
+    queryFn: async () => {
+      if (!actor) return [];
+      const cats = await actor.getDynamicCategories();
+      return [...cats].sort(
+        (a, b) => Number(a.displayOrder) - Number(b.displayOrder),
+      );
+    },
+    enabled: !!actor && !isFetching,
+    staleTime: 30_000,
+  });
+}
+
+export function useAddDynamicCategory() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (name: string) => {
+      if (!actor) throw new Error("No actor");
+      return actor.addDynamicCategory(name);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["dynamic-categories"] });
+    },
+  });
+}
+
+export function useUpdateDynamicCategory() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      if (!actor) throw new Error("No actor");
+      return actor.updateDynamicCategory(id, name);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["dynamic-categories"] });
+    },
+  });
+}
+
+export function useDeleteDynamicCategory() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      if (!actor) throw new Error("No actor");
+      return actor.deleteDynamicCategory(id);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["dynamic-categories"] });
+      qc.invalidateQueries({ queryKey: ["dynamic-products"] });
+    },
+  });
+}
+
+export function useSetCategoryOrder() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, newOrder }: { id: string; newOrder: bigint }) => {
+      if (!actor) throw new Error("No actor");
+      return actor.setCategoryOrder(id, newOrder);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["dynamic-categories"] });
+    },
+  });
+}
+
+// ── Dynamic products ──────────────────────────────────────────────────────────
+
+export function useDynamicProducts() {
+  const { actor, isFetching } = useActor();
+  return useQuery<DynamicProduct[]>({
+    queryKey: ["dynamic-products"],
+    queryFn: async () => {
+      if (!actor) return [];
+      const prods = await actor.getDynamicProducts();
+      return [...prods].sort(
+        (a, b) => Number(a.displayOrder) - Number(b.displayOrder),
+      );
+    },
+    enabled: !!actor && !isFetching,
+    staleTime: 30_000,
+  });
+}
+
+export function useAddDynamicProduct() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (p: {
+      categoryId: string;
+      name: string;
+      description: string;
+      price: bigint;
+      sizes: string[];
+      imageUrl: string | null;
+    }) => {
+      if (!actor) throw new Error("No actor");
+      return actor.addDynamicProduct(
+        p.categoryId,
+        p.name,
+        p.description,
+        p.price,
+        p.sizes,
+        p.imageUrl,
+      );
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["dynamic-products"] });
+    },
+  });
+}
+
+export function useUpdateDynamicProduct() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (p: {
+      id: string;
+      name: string;
+      description: string;
+      price: bigint;
+      sizes: string[];
+      imageUrl: string | null;
+      isActive: boolean;
+    }) => {
+      if (!actor) throw new Error("No actor");
+      return actor.updateDynamicProduct(
+        p.id,
+        p.name,
+        p.description,
+        p.price,
+        p.sizes,
+        p.imageUrl,
+        p.isActive,
+      );
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["dynamic-products"] });
+    },
+  });
+}
+
+export function useDeleteDynamicProduct() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      if (!actor) throw new Error("No actor");
+      return actor.deleteDynamicProduct(id);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["dynamic-products"] });
+    },
+  });
+}
+
+export function useSetDynamicProductOrder() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, newOrder }: { id: string; newOrder: bigint }) => {
+      if (!actor) throw new Error("No actor");
+      return actor.setDynamicProductOrder(id, newOrder);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["dynamic-products"] });
+    },
+  });
 }
 
 export function useSubmitContactMessage() {
@@ -263,8 +534,6 @@ export function useStock() {
 
 /**
  * Returns true if the given size is out of stock for a product.
- * Only returns true when stock data is loaded AND quantity is exactly 0.
- * If stock list is empty (not initialized), all sizes are treated as available.
  */
 export function isSizeOutOfStock(
   stockData:
@@ -282,52 +551,12 @@ export function isSizeOutOfStock(
 }
 
 /**
- * Returns the available sizes for a given category.
- * All categories use M, L, XL, XXL.
+ * Returns the available sizes for a given category (legacy, for static products).
  */
 export function getSizesForCategory(
   _category: Category,
 ): Array<"M" | "L" | "XL" | "XXL"> {
   return ["M", "L", "XL", "XXL"];
-}
-
-/**
- * Maps a product to its static image path.
- */
-const SUIT_IMAGE_BY_ID: Record<string, string> = {
-  "7": suit1Img,
-  "8": suit2Img,
-  "9": suit3Img,
-  "16": suit4Img,
-  "17": suit5Img,
-  "18": suit6Img,
-};
-
-const KURTI_IMAGE_BY_ID: Record<string, string> = {
-  "21": kurti1Img,
-  "22": kurti2Img,
-  "23": kurti3Img,
-};
-
-const COORD_IMAGE_BY_ID: Record<string, string> = {
-  "4": coord1Img,
-};
-
-export function getProductImage(
-  product: Product,
-  _allProductsInCategory: Product[],
-): string {
-  const key = product.id.toString();
-  switch (product.category) {
-    case Category.Kurties:
-      return SUIT_IMAGE_BY_ID[key] ?? suit1Img;
-    case Category.Sarees:
-      return KURTI_IMAGE_BY_ID[key] ?? kurtiHeroImg;
-    case Category.CoordSets:
-      return COORD_IMAGE_BY_ID[key] ?? coord1Img;
-    default:
-      return suit1Img;
-  }
 }
 
 /**

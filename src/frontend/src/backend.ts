@@ -97,11 +97,57 @@ export interface Product {
     category: Category;
     price: bigint;
 }
+export interface SaleItem {
+    size: string;
+    productId: string;
+    productName: string;
+    quantity: bigint;
+    price: bigint;
+}
+export type Timestamp = bigint;
+export interface StockEntry {
+    size: string;
+    productId: string;
+    productName: string;
+    quantity: bigint;
+    category: string;
+}
+export interface _CaffeineStorageRefillInformation {
+    proposed_top_up_amount?: bigint;
+}
+export interface _CaffeineStorageCreateCertificateResult {
+    method: string;
+    blob_hash: string;
+}
+export interface Sale {
+    id: SaleId;
+    customerName: string;
+    total: bigint;
+    date: Timestamp;
+    address: string;
+    mobile: string;
+    items: Array<SaleItem>;
+}
+export interface DynamicCategory {
+    id: string;
+    displayOrder: bigint;
+    name: string;
+}
 export interface VisitRecord {
     page: string;
     timestamp: Timestamp;
 }
-export type Timestamp = bigint;
+export interface DynamicProduct {
+    id: string;
+    categoryId: string;
+    displayOrder: bigint;
+    name: string;
+    description: string;
+    isActive: boolean;
+    sizes: Array<string>;
+    imageUrl?: string;
+    price: bigint;
+}
 export interface ContactMessage {
     name: string;
     email: string;
@@ -114,28 +160,15 @@ export interface CostPriceEntry {
 }
 export type SaleId = bigint;
 export type ProductId = bigint;
-export interface Sale {
-    id: SaleId;
-    customerName: string;
-    total: bigint;
-    date: Timestamp;
-    address: string;
-    mobile: string;
-    items: Array<SaleItem>;
+export interface _CaffeineStorageRefillResult {
+    success?: boolean;
+    topped_up_amount?: bigint;
 }
-export interface SaleItem {
-    size: string;
+export interface ProductOverride {
+    description?: string;
     productId: string;
-    productName: string;
-    quantity: bigint;
-    price: bigint;
-}
-export interface StockEntry {
-    size: string;
-    productId: string;
-    productName: string;
-    quantity: bigint;
-    category: string;
+    imageUrl?: string;
+    price?: bigint;
 }
 export enum Category {
     Sarees = "Sarees",
@@ -143,28 +176,159 @@ export enum Category {
     Kurties = "Kurties"
 }
 export interface backendInterface {
+    _caffeineStorageBlobIsLive(hash: Uint8Array): Promise<boolean>;
+    _caffeineStorageBlobsToDelete(): Promise<Array<Uint8Array>>;
+    _caffeineStorageConfirmBlobDeletion(blobs: Array<Uint8Array>): Promise<void>;
+    _caffeineStorageCreateCertificate(blobHash: string): Promise<_CaffeineStorageCreateCertificateResult>;
+    _caffeineStorageRefillCashier(refillInformation: _CaffeineStorageRefillInformation | null): Promise<_CaffeineStorageRefillResult>;
+    _caffeineStorageUpdateGatewayPrincipals(): Promise<void>;
+    addDynamicCategory(name: string): Promise<string>;
+    addDynamicProduct(categoryId: string, name: string, description: string, price: bigint, sizes: Array<string>, imageUrl: string | null): Promise<string>;
     addSale(customerName: string, mobile: string, address: string, items: Array<SaleItem>, total: bigint): Promise<void>;
     deductStock(productId: string, size: string, amount: bigint): Promise<void>;
+    deleteDynamicCategory(id: string): Promise<boolean>;
+    deleteDynamicProduct(id: string): Promise<boolean>;
     getAllContactMessages(): Promise<Array<ContactMessage>>;
     getAllProducts(): Promise<Array<Product>>;
     getAllSales(): Promise<Array<Sale>>;
     getAnalytics(): Promise<Array<VisitRecord>>;
     getCostPrices(): Promise<Array<CostPriceEntry>>;
+    getDynamicCategories(): Promise<Array<DynamicCategory>>;
+    getDynamicProducts(): Promise<Array<DynamicProduct>>;
+    getDynamicProductsByCategory(categoryId: string): Promise<Array<DynamicProduct>>;
     getFeaturedProducts(): Promise<Array<Product>>;
     getProductById(id: ProductId): Promise<Product>;
+    getProductOverrides(): Promise<Array<ProductOverride>>;
     getProductsByCategory(category: Category): Promise<Array<Product>>;
     getStock(): Promise<Array<StockEntry>>;
     init(): Promise<void>;
     initStock(entries: Array<StockEntry>): Promise<void>;
     recordVisit(page: string): Promise<void>;
     resetAllStock(): Promise<void>;
+    setCategoryOrder(id: string, newOrder: bigint): Promise<void>;
     setCostPrice(productId: string, costPrice: number): Promise<void>;
+    setDynamicProductOrder(id: string, newOrder: bigint): Promise<void>;
+    setProductOverride(productId: string, price: bigint | null, description: string | null, imageUrl: string | null): Promise<void>;
     setStockEntry(productId: string, productName: string, category: string, size: string, quantity: bigint): Promise<void>;
     submitContactMessage(name: string, email: string, message: string): Promise<void>;
+    updateDynamicCategory(id: string, name: string): Promise<boolean>;
+    updateDynamicProduct(id: string, name: string, description: string, price: bigint, sizes: Array<string>, imageUrl: string | null, isActive: boolean): Promise<boolean>;
 }
-import type { Category as _Category, Product as _Product, ProductId as _ProductId } from "./declarations/backend.did.d.ts";
+import type { Category as _Category, DynamicProduct as _DynamicProduct, Product as _Product, ProductId as _ProductId, ProductOverride as _ProductOverride, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
+    async _caffeineStorageBlobIsLive(arg0: Uint8Array): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor._caffeineStorageBlobIsLive(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor._caffeineStorageBlobIsLive(arg0);
+            return result;
+        }
+    }
+    async _caffeineStorageBlobsToDelete(): Promise<Array<Uint8Array>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor._caffeineStorageBlobsToDelete();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor._caffeineStorageBlobsToDelete();
+            return result;
+        }
+    }
+    async _caffeineStorageConfirmBlobDeletion(arg0: Array<Uint8Array>): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor._caffeineStorageConfirmBlobDeletion(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor._caffeineStorageConfirmBlobDeletion(arg0);
+            return result;
+        }
+    }
+    async _caffeineStorageCreateCertificate(arg0: string): Promise<_CaffeineStorageCreateCertificateResult> {
+        if (this.processError) {
+            try {
+                const result = await this.actor._caffeineStorageCreateCertificate(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor._caffeineStorageCreateCertificate(arg0);
+            return result;
+        }
+    }
+    async _caffeineStorageRefillCashier(arg0: _CaffeineStorageRefillInformation | null): Promise<_CaffeineStorageRefillResult> {
+        if (this.processError) {
+            try {
+                const result = await this.actor._caffeineStorageRefillCashier(to_candid_opt_n1(this._uploadFile, this._downloadFile, arg0));
+                return from_candid__CaffeineStorageRefillResult_n4(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor._caffeineStorageRefillCashier(to_candid_opt_n1(this._uploadFile, this._downloadFile, arg0));
+            return from_candid__CaffeineStorageRefillResult_n4(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async _caffeineStorageUpdateGatewayPrincipals(): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor._caffeineStorageUpdateGatewayPrincipals();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor._caffeineStorageUpdateGatewayPrincipals();
+            return result;
+        }
+    }
+    async addDynamicCategory(arg0: string): Promise<string> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.addDynamicCategory(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.addDynamicCategory(arg0);
+            return result;
+        }
+    }
+    async addDynamicProduct(arg0: string, arg1: string, arg2: string, arg3: bigint, arg4: Array<string>, arg5: string | null): Promise<string> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.addDynamicProduct(arg0, arg1, arg2, arg3, arg4, to_candid_opt_n8(this._uploadFile, this._downloadFile, arg5));
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.addDynamicProduct(arg0, arg1, arg2, arg3, arg4, to_candid_opt_n8(this._uploadFile, this._downloadFile, arg5));
+            return result;
+        }
+    }
     async addSale(arg0: string, arg1: string, arg2: string, arg3: Array<SaleItem>, arg4: bigint): Promise<void> {
         if (this.processError) {
             try {
@@ -193,6 +357,34 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async deleteDynamicCategory(arg0: string): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteDynamicCategory(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deleteDynamicCategory(arg0);
+            return result;
+        }
+    }
+    async deleteDynamicProduct(arg0: string): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteDynamicProduct(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deleteDynamicProduct(arg0);
+            return result;
+        }
+    }
     async getAllContactMessages(): Promise<Array<ContactMessage>> {
         if (this.processError) {
             try {
@@ -211,14 +403,14 @@ export class Backend implements backendInterface {
         if (this.processError) {
             try {
                 const result = await this.actor.getAllProducts();
-                return from_candid_vec_n1(this._uploadFile, this._downloadFile, result);
+                return from_candid_vec_n9(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getAllProducts();
-            return from_candid_vec_n1(this._uploadFile, this._downloadFile, result);
+            return from_candid_vec_n9(this._uploadFile, this._downloadFile, result);
         }
     }
     async getAllSales(): Promise<Array<Sale>> {
@@ -263,46 +455,102 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async getDynamicCategories(): Promise<Array<DynamicCategory>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getDynamicCategories();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getDynamicCategories();
+            return result;
+        }
+    }
+    async getDynamicProducts(): Promise<Array<DynamicProduct>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getDynamicProducts();
+                return from_candid_vec_n14(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getDynamicProducts();
+            return from_candid_vec_n14(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getDynamicProductsByCategory(arg0: string): Promise<Array<DynamicProduct>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getDynamicProductsByCategory(arg0);
+                return from_candid_vec_n14(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getDynamicProductsByCategory(arg0);
+            return from_candid_vec_n14(this._uploadFile, this._downloadFile, result);
+        }
+    }
     async getFeaturedProducts(): Promise<Array<Product>> {
         if (this.processError) {
             try {
                 const result = await this.actor.getFeaturedProducts();
-                return from_candid_vec_n1(this._uploadFile, this._downloadFile, result);
+                return from_candid_vec_n9(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getFeaturedProducts();
-            return from_candid_vec_n1(this._uploadFile, this._downloadFile, result);
+            return from_candid_vec_n9(this._uploadFile, this._downloadFile, result);
         }
     }
     async getProductById(arg0: ProductId): Promise<Product> {
         if (this.processError) {
             try {
                 const result = await this.actor.getProductById(arg0);
-                return from_candid_Product_n2(this._uploadFile, this._downloadFile, result);
+                return from_candid_Product_n10(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getProductById(arg0);
-            return from_candid_Product_n2(this._uploadFile, this._downloadFile, result);
+            return from_candid_Product_n10(this._uploadFile, this._downloadFile, result);
         }
     }
-    async getProductsByCategory(arg0: Category): Promise<Array<Product>> {
+    async getProductOverrides(): Promise<Array<ProductOverride>> {
         if (this.processError) {
             try {
-                const result = await this.actor.getProductsByCategory(to_candid_Category_n6(this._uploadFile, this._downloadFile, arg0));
-                return from_candid_vec_n1(this._uploadFile, this._downloadFile, result);
+                const result = await this.actor.getProductOverrides();
+                return from_candid_vec_n18(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.getProductsByCategory(to_candid_Category_n6(this._uploadFile, this._downloadFile, arg0));
-            return from_candid_vec_n1(this._uploadFile, this._downloadFile, result);
+            const result = await this.actor.getProductOverrides();
+            return from_candid_vec_n18(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getProductsByCategory(arg0: Category): Promise<Array<Product>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getProductsByCategory(to_candid_Category_n21(this._uploadFile, this._downloadFile, arg0));
+                return from_candid_vec_n9(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getProductsByCategory(to_candid_Category_n21(this._uploadFile, this._downloadFile, arg0));
+            return from_candid_vec_n9(this._uploadFile, this._downloadFile, result);
         }
     }
     async getStock(): Promise<Array<StockEntry>> {
@@ -375,6 +623,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async setCategoryOrder(arg0: string, arg1: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.setCategoryOrder(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.setCategoryOrder(arg0, arg1);
+            return result;
+        }
+    }
     async setCostPrice(arg0: string, arg1: number): Promise<void> {
         if (this.processError) {
             try {
@@ -386,6 +648,34 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.setCostPrice(arg0, arg1);
+            return result;
+        }
+    }
+    async setDynamicProductOrder(arg0: string, arg1: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.setDynamicProductOrder(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.setDynamicProductOrder(arg0, arg1);
+            return result;
+        }
+    }
+    async setProductOverride(arg0: string, arg1: bigint | null, arg2: string | null, arg3: string | null): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.setProductOverride(arg0, to_candid_opt_n23(this._uploadFile, this._downloadFile, arg1), to_candid_opt_n8(this._uploadFile, this._downloadFile, arg2), to_candid_opt_n8(this._uploadFile, this._downloadFile, arg3));
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.setProductOverride(arg0, to_candid_opt_n23(this._uploadFile, this._downloadFile, arg1), to_candid_opt_n8(this._uploadFile, this._downloadFile, arg2), to_candid_opt_n8(this._uploadFile, this._downloadFile, arg3));
             return result;
         }
     }
@@ -417,14 +707,60 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async updateDynamicCategory(arg0: string, arg1: string): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.updateDynamicCategory(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.updateDynamicCategory(arg0, arg1);
+            return result;
+        }
+    }
+    async updateDynamicProduct(arg0: string, arg1: string, arg2: string, arg3: bigint, arg4: Array<string>, arg5: string | null, arg6: boolean): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.updateDynamicProduct(arg0, arg1, arg2, arg3, arg4, to_candid_opt_n8(this._uploadFile, this._downloadFile, arg5), arg6);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.updateDynamicProduct(arg0, arg1, arg2, arg3, arg4, to_candid_opt_n8(this._uploadFile, this._downloadFile, arg5), arg6);
+            return result;
+        }
+    }
 }
-function from_candid_Category_n4(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _Category): Category {
-    return from_candid_variant_n5(_uploadFile, _downloadFile, value);
+function from_candid_Category_n12(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _Category): Category {
+    return from_candid_variant_n13(_uploadFile, _downloadFile, value);
 }
-function from_candid_Product_n2(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _Product): Product {
-    return from_candid_record_n3(_uploadFile, _downloadFile, value);
+function from_candid_DynamicProduct_n15(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _DynamicProduct): DynamicProduct {
+    return from_candid_record_n16(_uploadFile, _downloadFile, value);
 }
-function from_candid_record_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_ProductOverride_n19(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ProductOverride): ProductOverride {
+    return from_candid_record_n20(_uploadFile, _downloadFile, value);
+}
+function from_candid_Product_n10(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _Product): Product {
+    return from_candid_record_n11(_uploadFile, _downloadFile, value);
+}
+function from_candid__CaffeineStorageRefillResult_n4(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: __CaffeineStorageRefillResult): _CaffeineStorageRefillResult {
+    return from_candid_record_n5(_uploadFile, _downloadFile, value);
+}
+function from_candid_opt_n17(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [string]): string | null {
+    return value.length === 0 ? null : value[0];
+}
+function from_candid_opt_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [boolean]): boolean | null {
+    return value.length === 0 ? null : value[0];
+}
+function from_candid_opt_n7(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [bigint]): bigint | null {
+    return value.length === 0 ? null : value[0];
+}
+function from_candid_record_n11(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     id: _ProductId;
     name: string;
     description: string;
@@ -444,11 +780,74 @@ function from_candid_record_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint
         name: value.name,
         description: value.description,
         isFeatured: value.isFeatured,
-        category: from_candid_Category_n4(_uploadFile, _downloadFile, value.category),
+        category: from_candid_Category_n12(_uploadFile, _downloadFile, value.category),
         price: value.price
     };
 }
-function from_candid_variant_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_record_n16(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    id: string;
+    categoryId: string;
+    displayOrder: bigint;
+    name: string;
+    description: string;
+    isActive: boolean;
+    sizes: Array<string>;
+    imageUrl: [] | [string];
+    price: bigint;
+}): {
+    id: string;
+    categoryId: string;
+    displayOrder: bigint;
+    name: string;
+    description: string;
+    isActive: boolean;
+    sizes: Array<string>;
+    imageUrl?: string;
+    price: bigint;
+} {
+    return {
+        id: value.id,
+        categoryId: value.categoryId,
+        displayOrder: value.displayOrder,
+        name: value.name,
+        description: value.description,
+        isActive: value.isActive,
+        sizes: value.sizes,
+        imageUrl: record_opt_to_undefined(from_candid_opt_n17(_uploadFile, _downloadFile, value.imageUrl)),
+        price: value.price
+    };
+}
+function from_candid_record_n20(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    description: [] | [string];
+    productId: string;
+    imageUrl: [] | [string];
+    price: [] | [bigint];
+}): {
+    description?: string;
+    productId: string;
+    imageUrl?: string;
+    price?: bigint;
+} {
+    return {
+        description: record_opt_to_undefined(from_candid_opt_n17(_uploadFile, _downloadFile, value.description)),
+        productId: value.productId,
+        imageUrl: record_opt_to_undefined(from_candid_opt_n17(_uploadFile, _downloadFile, value.imageUrl)),
+        price: record_opt_to_undefined(from_candid_opt_n7(_uploadFile, _downloadFile, value.price))
+    };
+}
+function from_candid_record_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    success: [] | [boolean];
+    topped_up_amount: [] | [bigint];
+}): {
+    success?: boolean;
+    topped_up_amount?: bigint;
+} {
+    return {
+        success: record_opt_to_undefined(from_candid_opt_n6(_uploadFile, _downloadFile, value.success)),
+        topped_up_amount: record_opt_to_undefined(from_candid_opt_n7(_uploadFile, _downloadFile, value.topped_up_amount))
+    };
+}
+function from_candid_variant_n13(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     Sarees: null;
 } | {
     CoordSets: null;
@@ -457,13 +856,40 @@ function from_candid_variant_n5(_uploadFile: (file: ExternalBlob) => Promise<Uin
 }): Category {
     return "Sarees" in value ? Category.Sarees : "CoordSets" in value ? Category.CoordSets : "Kurties" in value ? Category.Kurties : value;
 }
-function from_candid_vec_n1(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_Product>): Array<Product> {
-    return value.map((x)=>from_candid_Product_n2(_uploadFile, _downloadFile, x));
+function from_candid_vec_n14(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_DynamicProduct>): Array<DynamicProduct> {
+    return value.map((x)=>from_candid_DynamicProduct_n15(_uploadFile, _downloadFile, x));
 }
-function to_candid_Category_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Category): _Category {
-    return to_candid_variant_n7(_uploadFile, _downloadFile, value);
+function from_candid_vec_n18(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_ProductOverride>): Array<ProductOverride> {
+    return value.map((x)=>from_candid_ProductOverride_n19(_uploadFile, _downloadFile, x));
 }
-function to_candid_variant_n7(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Category): {
+function from_candid_vec_n9(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_Product>): Array<Product> {
+    return value.map((x)=>from_candid_Product_n10(_uploadFile, _downloadFile, x));
+}
+function to_candid_Category_n21(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Category): _Category {
+    return to_candid_variant_n22(_uploadFile, _downloadFile, value);
+}
+function to_candid__CaffeineStorageRefillInformation_n2(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _CaffeineStorageRefillInformation): __CaffeineStorageRefillInformation {
+    return to_candid_record_n3(_uploadFile, _downloadFile, value);
+}
+function to_candid_opt_n1(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _CaffeineStorageRefillInformation | null): [] | [__CaffeineStorageRefillInformation] {
+    return value === null ? candid_none() : candid_some(to_candid__CaffeineStorageRefillInformation_n2(_uploadFile, _downloadFile, value));
+}
+function to_candid_opt_n23(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: bigint | null): [] | [bigint] {
+    return value === null ? candid_none() : candid_some(value);
+}
+function to_candid_opt_n8(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: string | null): [] | [string] {
+    return value === null ? candid_none() : candid_some(value);
+}
+function to_candid_record_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    proposed_top_up_amount?: bigint;
+}): {
+    proposed_top_up_amount: [] | [bigint];
+} {
+    return {
+        proposed_top_up_amount: value.proposed_top_up_amount ? candid_some(value.proposed_top_up_amount) : candid_none()
+    };
+}
+function to_candid_variant_n22(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Category): {
     Sarees: null;
 } | {
     CoordSets: null;

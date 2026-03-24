@@ -1,12 +1,14 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "motion/react";
-import { useState } from "react";
-import type { Product } from "../backend.d";
+import { useMemo, useState } from "react";
+import type { DisplayProduct } from "../hooks/useQueries";
 import {
   getProductImage,
+  toDisplayProduct,
   useAllProducts,
   useFeaturedProducts,
   useImageOverrides,
+  useProductOverrides,
 } from "../hooks/useQueries";
 import { ProductCard } from "./ProductCard";
 import { ProductQuickView } from "./ProductQuickView";
@@ -15,25 +17,50 @@ export function FeaturedSection() {
   const { data: featured, isLoading } = useFeaturedProducts();
   const { data: allProducts } = useAllProducts();
   const imageOverrides = useImageOverrides();
+  const { data: overrides } = useProductOverrides();
 
-  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(
-    null,
-  );
+  const [quickViewProduct, setQuickViewProduct] =
+    useState<DisplayProduct | null>(null);
   const [quickViewImage, setQuickViewImage] = useState<string>("");
 
-  const products = featured ?? [];
-
-  const getImage = (product: Product) => {
-    if (imageOverrides[product.id.toString()]) {
-      return imageOverrides[product.id.toString()];
+  const overrideMap = useMemo(() => {
+    const map: Record<
+      string,
+      { price?: bigint; description?: string; imageUrl?: string }
+    > = {};
+    if (overrides) {
+      for (const o of overrides) {
+        map[o.productId] = {
+          price: o.price ?? undefined,
+          description: o.description ?? undefined,
+          imageUrl: o.imageUrl ?? undefined,
+        };
+      }
     }
-    const catProds = (allProducts ?? []).filter(
-      (p) => p.category === product.category,
-    );
-    return getProductImage(product, catProds);
-  };
+    return map;
+  }, [overrides]);
 
-  const handleQuickView = (product: Product, image: string) => {
+  const displayProducts = useMemo(() => {
+    return (featured ?? []).map((product) => {
+      const ov = overrideMap[product.id.toString()];
+      const fallbackImage =
+        imageOverrides[product.id.toString()] ??
+        (() => {
+          const catProds = (allProducts ?? []).filter(
+            (p) => p.category === product.category,
+          );
+          return getProductImage(product, catProds);
+        })();
+      return toDisplayProduct(
+        product,
+        ov?.imageUrl || fallbackImage,
+        ov?.price,
+        ov?.description,
+      );
+    });
+  }, [featured, overrideMap, imageOverrides, allProducts]);
+
+  const handleQuickView = (product: DisplayProduct, image: string) => {
     setQuickViewProduct(product);
     setQuickViewImage(image);
   };
@@ -46,7 +73,6 @@ export function FeaturedSection() {
   return (
     <section className="py-20 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
         <motion.div
           className="text-center mb-14"
           initial={{ opacity: 0, y: 20 }}
@@ -67,7 +93,6 @@ export function FeaturedSection() {
           </p>
         </motion.div>
 
-        {/* Product Grid */}
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
@@ -85,11 +110,14 @@ export function FeaturedSection() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {products.map((product, idx) => (
+            {displayProducts.map((product, idx) => (
               <ProductCard
-                key={product.id.toString()}
+                key={product.id}
                 product={product}
-                image={getImage(product)}
+                image={
+                  product.imageUrl ??
+                  "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-1--1.jpeg"
+                }
                 index={idx + 1}
                 ocidScope="featured"
                 onQuickView={handleQuickView}
@@ -99,7 +127,6 @@ export function FeaturedSection() {
         )}
       </div>
 
-      {/* Quick View Modal */}
       <ProductQuickView
         product={quickViewProduct}
         image={quickViewImage}

@@ -8,9 +8,9 @@ import { CATALOG_PRODUCTS } from "./useQueries";
 interface ActorWithOverrides {
   setProductOverride(
     productId: string,
-    price: [] | [bigint],
-    description: [] | [string],
-    imageUrl: [] | [string],
+    price: bigint | null,
+    description: string | null,
+    imageUrl: string | null,
   ): Promise<void>;
   getProductOverrides(): Promise<Array<ProductOverride>>;
 }
@@ -285,9 +285,9 @@ export function useSetProductOverride() {
       if (!actor) return;
       await (actor as unknown as ActorWithOverrides).setProductOverride(
         productId,
-        price !== undefined ? [BigInt(Math.round(price))] : [],
-        description !== undefined ? [description] : [],
-        imageUrl !== undefined ? [imageUrl] : [],
+        price !== undefined ? BigInt(Math.round(price)) : null,
+        description !== undefined ? description : null,
+        imageUrl !== undefined ? imageUrl : null,
       );
     },
     onSuccess: () => {

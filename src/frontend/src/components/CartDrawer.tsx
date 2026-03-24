@@ -15,23 +15,11 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Category } from "../backend.d";
 import { useActor } from "../hooks/useActor";
-
 import { useCart } from "../hooks/useCart";
 import { formatPrice } from "../hooks/useQueries";
 
 const WHATSAPP_NUMBER = "917290016528";
-
-const CATEGORY_LABELS: Record<string, string> = {
-  [Category.Kurties]: "Suit Set",
-  [Category.Sarees]: "Kurti Set",
-  [Category.CoordSets]: "Co-ord Set",
-};
-
-function getCategoryLabel(cat: string): string {
-  return CATEGORY_LABELS[cat] ?? cat;
-}
 
 interface CustomerDetails {
   name: string;
@@ -41,7 +29,7 @@ interface CustomerDetails {
 
 type CheckoutStep = "cart" | "details";
 
-// Footer height constant (px) — used to add bottom padding to scroll areas
+// Footer height constant (px)
 const FOOTER_H = 160;
 
 export function CartDrawer() {
@@ -67,7 +55,6 @@ export function CartDrawer() {
   });
   const [errors, setErrors] = useState<Partial<CustomerDetails>>({});
 
-  // Reset step when drawer closes
   useEffect(() => {
     if (!isOpen) {
       setStep("cart");
@@ -112,18 +99,15 @@ export function CartDrawer() {
   const handleSendWhatsApp = () => {
     if (!validate()) return;
 
-    // Record the sale in the backend (fire-and-forget)
     const saleItems = items.map((item) => ({
-      productId: item.product.id.toString(),
+      productId: item.product.id,
       productName: item.product.name,
       size: item.size,
       quantity: BigInt(item.quantity),
       price: item.product.price,
     }));
 
-    // Save to backend
     if (actor) {
-      // addSale
       actor
         .addSale(
           details.name.trim(),
@@ -132,21 +116,12 @@ export function CartDrawer() {
           saleItems,
           totalPrice,
         )
-        .catch(() => {
-          // fire-and-forget
-        });
+        .catch(() => {});
 
-      // Deduct stock for each item
       for (const item of items) {
         actor
-          .deductStock(
-            item.product.id.toString(),
-            item.size,
-            BigInt(item.quantity),
-          )
-          .catch(() => {
-            // fire-and-forget
-          });
+          .deductStock(item.product.id, item.size, BigInt(item.quantity))
+          .catch(() => {});
       }
     }
 
@@ -163,7 +138,6 @@ export function CartDrawer() {
 
   return (
     <>
-      {/* Backdrop */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -177,7 +151,6 @@ export function CartDrawer() {
         )}
       </AnimatePresence>
 
-      {/* Drawer panel — no onClick on the panel itself */}
       <AnimatePresence>
         {isOpen && (
           <motion.aside
@@ -256,15 +229,14 @@ export function CartDrawer() {
                 </div>
               ) : (
                 <>
-                  {/* Scrollable cart items — padded so content clears the fixed footer */}
                   <div
-                    className="flex-1 overflow-y-auto overscroll-contain -webkit-overflow-scrolling-touch px-5"
+                    className="flex-1 overflow-y-auto overscroll-contain px-5"
                     style={{ paddingBottom: FOOTER_H }}
                   >
                     <div className="py-4 space-y-4">
                       {items.map((item, idx) => (
                         <motion.div
-                          key={`${item.product.id.toString()}-${item.size}`}
+                          key={`${item.product.id}-${item.size}`}
                           data-ocid={`cart.item.${idx + 1}`}
                           layout
                           initial={{ opacity: 0, x: 20 }}
@@ -284,9 +256,11 @@ export function CartDrawer() {
                             <p className="font-semibold text-card-foreground text-sm line-clamp-1 mb-0.5">
                               {item.product.name}
                             </p>
-                            <p className="text-muted-foreground text-xs mb-1 capitalize">
-                              {getCategoryLabel(item.product.category)}
-                            </p>
+                            {item.product.category && (
+                              <p className="text-muted-foreground text-xs mb-1 capitalize">
+                                {item.product.category}
+                              </p>
+                            )}
                             <p className="text-xs font-medium text-primary mb-2">
                               Size: {item.size}
                             </p>
@@ -339,7 +313,6 @@ export function CartDrawer() {
                     </div>
                   </div>
 
-                  {/* Cart footer — absolutely positioned to sit at the bottom of the drawer */}
                   <div
                     className="absolute bottom-0 left-0 right-0 p-5 border-t border-border space-y-4 bg-card"
                     style={{
@@ -387,7 +360,6 @@ export function CartDrawer() {
             {/* ---- STEP: CUSTOMER DETAILS ---- */}
             {step === "details" && (
               <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
-                {/* Scrollable form area — padded so content clears the fixed footer */}
                 <div
                   className="flex-1 overflow-y-auto overscroll-contain px-5 py-6"
                   style={{ paddingBottom: FOOTER_H }}
@@ -397,14 +369,13 @@ export function CartDrawer() {
                     WhatsApp.
                   </p>
 
-                  {/* Mini order summary */}
                   <div className="bg-secondary/50 rounded-sm p-4 mb-6 space-y-1">
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
                       Order Summary
                     </p>
                     {items.map((item) => (
                       <div
-                        key={`${item.product.id.toString()}-${item.size}`}
+                        key={`${item.product.id}-${item.size}`}
                         className="flex justify-between text-sm"
                       >
                         <span className="text-foreground">
@@ -427,7 +398,6 @@ export function CartDrawer() {
                   </div>
 
                   <div className="space-y-5">
-                    {/* Name */}
                     <div className="space-y-1.5">
                       <Label
                         htmlFor="customer-name"
@@ -461,7 +431,6 @@ export function CartDrawer() {
                       )}
                     </div>
 
-                    {/* Mobile */}
                     <div className="space-y-1.5">
                       <Label
                         htmlFor="customer-mobile"
@@ -499,7 +468,6 @@ export function CartDrawer() {
                       )}
                     </div>
 
-                    {/* Address */}
                     <div className="space-y-1.5">
                       <Label
                         htmlFor="customer-address"
@@ -522,11 +490,7 @@ export function CartDrawer() {
                           if (errors.address)
                             setErrors((er) => ({ ...er, address: undefined }));
                         }}
-                        className={`w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none ${
-                          errors.address
-                            ? "border-destructive focus-visible:ring-destructive"
-                            : "border-input"
-                        }`}
+                        className={`w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none ${errors.address ? "border-destructive focus-visible:ring-destructive" : "border-input"}`}
                       />
                       {errors.address && (
                         <p
@@ -540,7 +504,6 @@ export function CartDrawer() {
                   </div>
                 </div>
 
-                {/* Details footer — absolutely positioned */}
                 <div
                   className="absolute bottom-0 left-0 right-0 p-5 border-t border-border space-y-3 bg-card"
                   style={{
@@ -549,7 +512,6 @@ export function CartDrawer() {
                     zIndex: 10,
                   }}
                 >
-                  {/* WhatsApp button as plain button — no anchor tag to avoid iOS link-tap quirks */}
                   <button
                     type="button"
                     data-ocid="cart.whatsapp_submit_button"

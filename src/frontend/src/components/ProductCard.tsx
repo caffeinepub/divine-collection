@@ -2,39 +2,19 @@ import { Button } from "@/components/ui/button";
 import { Eye, ShoppingBag } from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
-import type { Product } from "../backend.d";
-import { Category } from "../backend.d";
-import type { ProductSize } from "../hooks/useCart";
+import type { CartProduct, ProductSize } from "../hooks/useCart";
 import { useCart } from "../hooks/useCart";
-import {
-  formatPrice,
-  getSizesForCategory,
-  isSizeOutOfStock,
-  useStock,
-} from "../hooks/useQueries";
+import type { DisplayProduct } from "../hooks/useQueries";
+import { isSizeOutOfStock, useStock } from "../hooks/useQueries";
 import { SizeChartModal } from "./SizeChartModal";
 
 interface ProductCardProps {
-  product: Product;
+  product: DisplayProduct;
   image: string;
   index: number;
   ocidScope?: string;
-  onQuickView?: (product: Product, image: string) => void;
+  onQuickView?: (product: DisplayProduct, image: string) => void;
 }
-
-const categoryColors: Record<string, string> = {
-  [Category.Sarees]: "bg-magenta/10 text-magenta border-magenta/30",
-  [Category.CoordSets]: "bg-gold/10 text-gold-dark border-gold/30",
-  [Category.Kurties]: "bg-crimson/10 text-crimson border-crimson/30",
-  [Category.NightWear]: "bg-indigo-100 text-indigo-700 border-indigo-200",
-};
-
-const categoryLabels: Record<string, string> = {
-  [Category.Sarees]: "Kurti Set",
-  [Category.CoordSets]: "Co-ord Set",
-  [Category.Kurties]: "Suit",
-  [Category.NightWear]: "Night Wear",
-};
 
 export function ProductCard({
   product,
@@ -44,12 +24,10 @@ export function ProductCard({
   onQuickView,
 }: ProductCardProps) {
   const { addItem } = useCart();
-  const [selectedSize, setSelectedSize] = useState<ProductSize | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [showSizeError, setShowSizeError] = useState(false);
   const [showSizeChart, setShowSizeChart] = useState(false);
   const { data: stockData } = useStock();
-
-  const availableSizes = getSizesForCategory(product.category);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -58,7 +36,13 @@ export function ProductCard({
       setTimeout(() => setShowSizeError(false), 2000);
       return;
     }
-    addItem(product, image, selectedSize);
+    const cartProduct: CartProduct = {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      category: product.categoryName,
+    };
+    addItem(cartProduct, image, selectedSize as ProductSize);
   };
 
   return (
@@ -71,7 +55,7 @@ export function ProductCard({
         viewport={{ once: true, margin: "-50px" }}
         transition={{ duration: 0.5, delay: index * 0.08 }}
       >
-        {/* Image — clickable for quick view */}
+        {/* Image */}
         <div className="img-zoom aspect-[3/4] relative bg-secondary">
           <img
             src={image}
@@ -81,22 +65,10 @@ export function ProductCard({
           />
           {/* Category badge */}
           <div className="absolute top-3 left-3 pointer-events-none">
-            <span
-              className={`text-xs font-medium px-2 py-1 rounded-full border backdrop-blur-sm ${
-                categoryColors[product.category] ??
-                "bg-white/80 text-charcoal border-border"
-              }`}
-            >
-              {categoryLabels[product.category] ?? product.category}
+            <span className="text-xs font-medium px-2 py-1 rounded-full border backdrop-blur-sm bg-gold/10 text-gold-dark border-gold/30">
+              {product.categoryName}
             </span>
           </div>
-          {product.isFeatured && (
-            <div className="absolute top-3 right-3 pointer-events-none">
-              <span className="text-xs font-medium px-2 py-1 rounded-full border gold-gradient text-charcoal backdrop-blur-sm">
-                Featured
-              </span>
-            </div>
-          )}
           {/* Hover overlay with Quick View */}
           <div className="absolute inset-0 bg-charcoal/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-end gap-2 p-4">
             <button
@@ -124,10 +96,9 @@ export function ProductCard({
             {product.description}
           </p>
 
-          {/* Price */}
           {Number(product.price) > 0 && (
             <p className="text-primary font-semibold text-sm mb-3">
-              {formatPrice(product.price)}
+              ₹{Number(product.price).toLocaleString("en-IN")}/-
             </p>
           )}
 
@@ -137,7 +108,7 @@ export function ProductCard({
               Select Size
             </p>
             <div className="flex gap-1.5 flex-wrap">
-              {availableSizes.map((size) => {
+              {product.sizes.map((size) => {
                 const outOfStock = isSizeOutOfStock(
                   stockData as
                     | Array<{
@@ -146,7 +117,7 @@ export function ProductCard({
                         quantity: bigint;
                       }>
                     | undefined,
-                  product.id.toString(),
+                  product.id,
                   size,
                 );
                 return (
@@ -178,7 +149,6 @@ export function ProductCard({
                 Please select a size
               </p>
             )}
-            {/* Size Chart link */}
             <button
               type="button"
               data-ocid="product.sizechart.open_modal_button"

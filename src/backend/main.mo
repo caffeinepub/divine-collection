@@ -1,3 +1,4 @@
+import Iter "mo:core/Iter";
 import Map "mo:core/Map";
 import Nat "mo:core/Nat";
 import Runtime "mo:core/Runtime";
@@ -6,11 +7,12 @@ import Array "mo:core/Array";
 import Int "mo:core/Int";
 import Float "mo:core/Float";
 import Order "mo:core/Order";
-import Iter "mo:core/Iter";
 import Text "mo:core/Text";
+import Storage "blob-storage/Storage";
+import MixinStorage "blob-storage/Mixin";
+import Migration "migration";
 
-
-
+(with migration = Migration.run)
 actor {
   //----------------------------------------
   // Type Definitions
@@ -82,6 +84,24 @@ actor {
     price : ?Nat;
     description : ?Text;
     imageUrl : ?Text;
+  };
+
+  type DynamicCategory = {
+    id : Text;
+    name : Text;
+    displayOrder : Nat;
+  };
+
+  type DynamicProduct = {
+    id : Text;
+    categoryId : Text;
+    name : Text;
+    description : Text;
+    price : Nat;
+    sizes : [Text];
+    imageUrl : ?Text;
+    displayOrder : Nat;
+    isActive : Bool;
   };
 
   //----------------------------------------
@@ -369,4 +389,177 @@ actor {
   public query ({ caller }) func getProductOverrides() : async [ProductOverride] {
     productOverrides.values().toArray();
   };
+
+  //----------------------------------------
+  // Dynamic Catalog Management
+  //----------------------------------------
+  let dynamicCategories = Map.empty<Text, DynamicCategory>();
+  let dynamicProducts = Map.empty<Text, DynamicProduct>();
+
+  //- Dynamic Categories
+  public shared ({ caller }) func addDynamicCategory(name : Text) : async Text {
+    let id = Time.now().toText() # name # "cat";
+    let category : DynamicCategory = {
+      id;
+      name;
+      displayOrder = dynamicCategories.size() + 1;
+    };
+    dynamicCategories.add(id, category);
+    id;
+  };
+
+  public shared ({ caller }) func updateDynamicCategory(id : Text, name : Text) : async Bool {
+    switch (dynamicCategories.get(id)) {
+      case (null) { false };
+      case (?cat) {
+        dynamicCategories.add(id, {
+          id;
+          name;
+          displayOrder = cat.displayOrder;
+        });
+        true;
+      };
+    };
+  };
+
+  public shared ({ caller }) func deleteDynamicCategory(id : Text) : async Bool {
+    if (dynamicCategories.containsKey(id)) {
+      dynamicCategories.remove(id);
+      true;
+    } else {
+      false;
+    };
+  };
+
+  public query ({ caller }) func getDynamicCategories() : async [DynamicCategory] {
+    let categories = dynamicCategories.values().toArray();
+    categories.sort(
+      func(a, b) {
+        Int.compare(a.displayOrder, b.displayOrder);
+      }
+    );
+  };
+
+  public shared ({ caller }) func setCategoryOrder(id : Text, newOrder : Nat) : async () {
+    switch (dynamicCategories.get(id)) {
+      case (null) { Runtime.trap("Category not found") };
+      case (?category) {
+        dynamicCategories.add(id, {
+          id;
+          name = category.name;
+          displayOrder = newOrder;
+        });
+      };
+    };
+  };
+
+  //- Dynamic Products
+  public shared ({ caller }) func addDynamicProduct(
+    categoryId : Text,
+    name : Text,
+    description : Text,
+    price : Nat,
+    sizes : [Text],
+    imageUrl : ?Text,
+  ) : async Text {
+    let id = categoryId # name # Time.now().toText();
+    let product : DynamicProduct = {
+      id;
+      categoryId;
+      name;
+      description;
+      price;
+      sizes;
+      imageUrl;
+      displayOrder = Time.now().toNat();
+      isActive = true;
+    };
+    dynamicProducts.add(id, product);
+    id;
+  };
+
+  public shared ({ caller }) func updateDynamicProduct(
+    id : Text,
+    name : Text,
+    description : Text,
+    price : Nat,
+    sizes : [Text],
+    imageUrl : ?Text,
+    isActive : Bool,
+  ) : async Bool {
+    switch (dynamicProducts.get(id)) {
+      case (null) { false };
+      case (?prod) {
+        dynamicProducts.add(id, {
+          id;
+          categoryId = prod.categoryId;
+          name;
+          description;
+          price;
+          sizes;
+          imageUrl;
+          displayOrder = prod.displayOrder;
+          isActive;
+        });
+        true;
+      };
+    };
+  };
+
+  public shared ({ caller }) func deleteDynamicProduct(id : Text) : async Bool {
+    if (dynamicProducts.containsKey(id)) {
+      dynamicProducts.remove(id);
+      true;
+    } else {
+      false;
+    };
+  };
+
+  public query ({ caller }) func getDynamicProducts() : async [DynamicProduct] {
+    let products = dynamicProducts.values().toArray();
+    products.sort(
+      func(a, b) {
+        switch (Text.compare(a.categoryId, b.categoryId)) {
+          case (#less) { #less };
+          case (#greater) { #greater };
+          case (#equal) { Int.compare(a.displayOrder, b.displayOrder) };
+        };
+      }
+    );
+  };
+
+  public query ({ caller }) func getDynamicProductsByCategory(categoryId : Text) : async [DynamicProduct] {
+    let products = dynamicProducts.values().toArray().filter(
+      func(prod) { prod.categoryId == categoryId }
+    );
+    products.sort(
+      func(a, b) {
+        Int.compare(a.displayOrder, b.displayOrder);
+      }
+    );
+  };
+
+  public shared ({ caller }) func setDynamicProductOrder(id : Text, newOrder : Nat) : async () {
+    switch (dynamicProducts.get(id)) {
+      case (null) { Runtime.trap("Product not found") };
+      case (?prod) {
+        dynamicProducts.add(id, {
+          id;
+          categoryId = prod.categoryId;
+          name = prod.name;
+          description = prod.description;
+          price = prod.price;
+          sizes = prod.sizes;
+          imageUrl = prod.imageUrl;
+          displayOrder = newOrder;
+          isActive = prod.isActive;
+        });
+      };
+    };
+  };
+
+  //----------------------------------------
+  // File Uploads (Mixin from blob-storage)
+  //----------------------------------------
+  include MixinStorage();
 };

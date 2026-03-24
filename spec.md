@@ -1,38 +1,34 @@
 # Divine Collection
 
 ## Current State
-
-- E-commerce site for Indian traditional wear (Suit Sets, Kurti Sets, Co-ord Sets, Night Wear)
-- Product catalog is fully hardcoded in `useQueries.ts` (CATALOG_PRODUCTS + image maps)
-- Admin dashboard at `/admin` has tabs: Sales, Stock, Analytics, Cost Prices
-- All product changes (images, prices, descriptions) currently require a code rebuild
+The backend uses a fixed Category enum (Sarees, CoordSets, Kurties) and a static initial product list. Product overrides (price, description, image) can be set per product via `setProductOverride`. The admin Products tab supports image upload via blob-storage. There is no way to add/remove categories or products from the admin dashboard, and there is no display order control.
 
 ## Requested Changes (Diff)
 
 ### Add
-- `ProductOverride` backend type: `{ productId: Text; price: ?Nat; description: ?Text; imageUrl: ?Text; }`
-- Backend functions: `setProductOverride(productId, price, description, imageUrl)` and `getProductOverrides()` 
-- Blob-storage for admin to upload new product images
-- Admin dashboard "Products" tab: edit price, description, and image for each product
-- Frontend merges CATALOG_PRODUCTS with backend overrides at runtime (no rebuild needed)
+- `DynamicCategory` type: id (Text), name (Text), displayOrder (Nat)
+- `DynamicProduct` type: id (Text), categoryId (Text), name (Text), description (Text), price (Nat), sizes ([Text]), imageUrl (?Text), displayOrder (Nat), isActive (Bool)
+- Backend methods: `addCategory`, `updateCategory`, `deleteCategory`, `getCategories`
+- Backend methods: `addProduct`, `updateProduct`, `deleteProduct`, `getDynamicProducts`, `getDynamicProductsByCategory`
+- Backend methods: `setCategoryOrder`, `setProductOrder` (reorder within category)
+- Admin panel: "Categories" tab -- list categories with drag/reorder, add new category form, delete button
+- Admin panel: "Products" tab enhanced -- add new product form (name, category, price, sizes, description, image upload), delete product button, drag/reorder within category
+- Customer-facing: product grid and category pages dynamically driven from backend dynamic catalog
 
 ### Modify
-- `useAllProducts()` — now fetches overrides from backend and merges: override price/description/imageUrl take precedence over static defaults
-- `getProductImage()` — checks override imageUrl first, falls back to static image map
-- `AdminPage` — adds new "Products" tab with editable product cards
+- Customer-facing product display reads from `getDynamicProducts` / `getCategories` instead of static data
+- Stock management uses dynamic product IDs from the new catalog
+- Cost price management uses dynamic product IDs
+- Sales logging references dynamic product IDs
 
 ### Remove
-- Nothing removed
+- Static initial product list and fixed `Category` enum from backend (keep for backward compatibility but no longer primary data source)
+- Static product data hardcoded in frontend
 
 ## Implementation Plan
-
-1. Add `ProductOverride` type and stable storage map to `main.mo`
-2. Add `setProductOverride` and `getProductOverrides` functions to `main.mo`
-3. Update `backend.d.ts` with `ProductOverride` type and two new interface methods
-4. Select blob-storage component for image uploads
-5. Update `useQueries.ts`: add `useProductOverrides()` hook, update `useAllProducts()` to merge overrides, update `getProductImage()` to use override imageUrl
-6. Add "Products" tab to `AdminPage.tsx`:
-   - List all 12 products (all 4 categories)
-   - Each row/card: current image thumbnail, editable price field, editable description field, image upload button (via blob-storage)
-   - "Save" button calls `setProductOverride` on the backend
-7. On the customer-facing site, `useAllProducts()` returns products with override data applied transparently
+1. Add `DynamicCategory` and `DynamicProduct` types to backend with CRUD and reorder methods
+2. Keep existing sales, stock, analytics, cost price, blob-storage mixin unchanged
+3. Seed default categories (Suit Sets, Kurti Sets, Co-ord Sets) on first init if empty
+4. Seed default products (6 Suit Sets, 3 Kurti Sets, 1 Co-ord Set) with existing image paths
+5. Frontend admin: add Categories tab (add/rename/delete/reorder), extend Products tab (add new product, delete, reorder)
+6. Frontend customer-facing: read categories and products from backend dynamic catalog, preserve all existing UI (zoom, quick-view, WhatsApp, size chart, stock strikethrough)
