@@ -8,6 +8,7 @@ import { FeaturedSection } from "./components/FeaturedSection";
 import { Footer } from "./components/Footer";
 import { HeroSection } from "./components/HeroSection";
 import { Navbar } from "./components/Navbar";
+import { ProductImagePreloader } from "./components/ProductImagePreloader";
 import { ShopSection } from "./components/ShopSection";
 import { recordVisit } from "./hooks/useAdminData";
 import { CartProvider } from "./hooks/useCart";
@@ -15,7 +16,7 @@ import { useInitBackend } from "./hooks/useQueries";
 import { AdminPage } from "./pages/AdminPage";
 import { CollectionPageContent } from "./pages/CollectionPage";
 
-// ── Route types ────────────────────────────────────────────────────────────────
+// ── Route types ────────────────────────────────────────────────────────────────────
 type Route =
   | { page: "home" }
   | { page: "collection"; category: Category }
@@ -25,14 +26,12 @@ const SLUG_TO_CATEGORY: Record<string, Category> = {
   "suit-sets": Category.Kurties,
   "kurti-sets": Category.Sarees,
   "coord-sets": Category.CoordSets,
-  "night-wear": Category.NightWear,
 };
 
-const CATEGORY_TO_SLUG: Record<Category, string> = {
+const CATEGORY_TO_SLUG: Record<string, string> = {
   [Category.Sarees]: "kurti-sets",
   [Category.CoordSets]: "coord-sets",
   [Category.Kurties]: "suit-sets",
-  [Category.NightWear]: "night-wear",
 };
 
 function resolveRoute(): Route {
@@ -46,7 +45,7 @@ function resolveRoute(): Route {
   return { page: "home" };
 }
 
-// ── Home page content ──────────────────────────────────────────────────────────────────────
+// ── Home page content ──────────────────────────────────────────────────────────────────────────
 function HomePage({
   onNavigateToCollection,
 }: {
@@ -117,7 +116,7 @@ function HomePage({
   );
 }
 
-// ── Root App ──────────────────────────────────────────────────────────────────────────
+// ── Root App ──────────────────────────────────────────────────────────────────────────────
 function AppContent() {
   const [route, setRoute] = useState<Route>(resolveRoute);
 
@@ -132,7 +131,7 @@ function AppContent() {
         window.history.pushState(null, "", "/admin");
       }
     } else {
-      const slug = CATEGORY_TO_SLUG[route.category];
+      const slug = CATEGORY_TO_SLUG[route.category as string];
       const target = `/collections/${slug}`;
       if (window.location.pathname !== target) {
         window.history.pushState(null, "", target);
@@ -166,8 +165,6 @@ function AppContent() {
         recordVisit("Kurti Sets");
       } else if (route.category === Category.CoordSets) {
         recordVisit("Co-ord Sets");
-      } else if (route.category === Category.NightWear) {
-        recordVisit("Night Wear");
       }
     }
   }, [route]);
@@ -220,6 +217,8 @@ function AppContent() {
 export default function App() {
   return (
     <CartProvider>
+      {/* Hidden preloader — ensures build scanner finds all image paths */}
+      <ProductImagePreloader />
       <AppContent />
       <Toaster position="top-right" richColors />
     </CartProvider>

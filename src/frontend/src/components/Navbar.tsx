@@ -23,7 +23,6 @@ const collections = [
   { label: "Suit Sets", slug: "suit-sets" },
   { label: "Kurti Sets", slug: "kurti-sets" },
   { label: "Co-ord Sets", slug: "coord-sets" },
-  { label: "Night Wear", slug: "night-wear" },
 ];
 
 export function Navbar({
@@ -104,7 +103,7 @@ export function Navbar({
               className="flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold rounded"
             >
               <img
-                src="/assets/generated/divine-logo-transparent.dim_400x200.png"
+                src="/assets/generated/brand-logo.dim_400x160.png"
                 alt="Divine Collection"
                 className="h-10 lg:h-12 w-auto object-contain"
               />

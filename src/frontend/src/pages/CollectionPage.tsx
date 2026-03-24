@@ -12,7 +12,6 @@ import {
   coord1Img,
   getProductImage,
   kurtiHeroImg,
-  nightwear2Img,
   suit1Img,
   useAllProducts,
   useImageOverrides,
@@ -20,7 +19,7 @@ import {
 
 // ── Per-collection metadata ──────────────────────────────────────────────────────────────────────────────
 const COLLECTION_META: Record<
-  Category,
+  string,
   {
     title: string;
     subtitle: string;
@@ -56,15 +55,6 @@ const COLLECTION_META: Record<
     heroGradient:
       "linear-gradient(135deg, oklch(0.18 0.06 25 / 0.88) 0%, oklch(0.28 0.08 45 / 0.70) 100%)",
   },
-  [Category.NightWear]: {
-    title: "Night Wear",
-    subtitle: "Relax in Style",
-    description:
-      "Soft, breathable night wear sets designed for a restful night's sleep — combining comfort with style so you can unwind in elegance every evening.",
-    heroImage: nightwear2Img,
-    heroGradient:
-      "linear-gradient(135deg, oklch(0.18 0.05 270 / 0.88) 0%, oklch(0.28 0.06 240 / 0.70) 100%)",
-  },
 };
 
 // ── Props ──────────────────────────────────────────────────────────────────────────────────────
@@ -93,7 +83,14 @@ export function CollectionPageContent({
     [products, category],
   );
 
-  const meta = COLLECTION_META[category];
+  const meta = COLLECTION_META[category as string] ?? {
+    title: "Collection",
+    subtitle: "",
+    description: "",
+    heroImage: suit1Img,
+    heroGradient:
+      "linear-gradient(135deg, oklch(0.18 0.06 25 / 0.88) 0%, oklch(0.28 0.08 45 / 0.70) 100%)",
+  };
 
   const getImage = (product: Product) =>
     imageOverrides[product.id.toString()] ??

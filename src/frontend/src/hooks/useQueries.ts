@@ -3,31 +3,42 @@ import { Category, type Product } from "../backend.d";
 import type { ProductOverride } from "../backend.d";
 import { useActor } from "./useActor";
 
-import suit2Img from "../assets/ChatGPT-Image-Mar-11-2026-05_41_46-PM-1.png";
-import kurti1Img from "../assets/ChatGPT-Image-Mar-17-2026-05_21_56-PM-1-1.png";
-import coord1Img from "../assets/WhatsApp-Image-2026-03-08-at-7.40.45-PM-1--1.jpeg";
-import kurti2Img from "../assets/WhatsApp-Image-2026-03-08-at-7.40.45-PM-2--2.jpeg";
-import kurti3Img from "../assets/WhatsApp-Image-2026-03-08-at-7.40.45-PM-3--3.jpeg";
-// ── Image imports (ES module imports ensure Vite bundles these assets) ─────────
-import suit1Img from "../assets/WhatsApp-Image-2026-03-08-at-7.40.46-PM-1--1.jpeg";
-import kurtiHeroImg from "../assets/WhatsApp-Image-2026-03-08-at-7.40.46-PM-1.jpeg";
-import suit5Img from "../assets/WhatsApp-Image-2026-03-08-at-7.40.46-PM-2--5.jpeg";
-import suit3Img from "../assets/WhatsApp-Image-2026-03-08-at-7.40.47-PM-1--3.jpeg";
-import suit6Img from "../assets/WhatsApp-Image-2026-03-08-at-7.40.47-PM-3--6.jpeg";
-import suit4Img from "../assets/WhatsApp-Image-2026-03-08-at-7.40.47-PM-4.jpeg";
-import sizeChartImg from "../assets/WhatsApp-Image-2026-03-09-at-10.34.16-PM-1.jpeg";
-import nightwear1Img from "../assets/WhatsApp-Image-2026-03-22-at-4.47.00-PM-1.jpeg";
-import nightwear2Img from "../assets/WhatsApp-Image-2026-03-22-at-7.50.49-PM-2.jpeg";
-
-// Export for use in other components
-export { suit1Img, coord1Img, kurtiHeroImg, nightwear2Img, sizeChartImg };
-
 // Extended actor type for product overrides
 interface ActorWithOverrides {
   getProductOverrides(): Promise<Array<ProductOverride>>;
 }
 
 export type { Product, Category };
+
+// ── Static image paths (served from public/assets/uploads/) ──────────────────
+// Using string literals so the Caffeine build scanner preserves these files.
+const suit1Img =
+  "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-1--1.jpeg";
+const suit2Img = "/assets/uploads/ChatGPT-Image-Mar-11-2026-05_41_46-PM-1.png";
+const suit3Img =
+  "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.47-PM-1--3.jpeg";
+const suit4Img =
+  "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.47-PM-4.jpeg";
+const suit5Img =
+  "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-2--5.jpeg";
+const suit6Img =
+  "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.47-PM-3--6.jpeg";
+const kurti1Img =
+  "/assets/uploads/ChatGPT-Image-Mar-17-2026-05_21_56-PM-1-1.png";
+const kurti2Img =
+  "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.45-PM-2--2.jpeg";
+const kurti3Img =
+  "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.45-PM-3--3.jpeg";
+export const coord1Img =
+  "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.45-PM-1--1.jpeg";
+export const kurtiHeroImg =
+  "/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-1.jpeg";
+export const suit1ImgExport = suit1Img;
+export const sizeChartImg =
+  "/assets/uploads/WhatsApp-Image-2026-03-09-at-10.34.16-PM-1.jpeg";
+
+// Export suit1Img for use in CollectionPage hero
+export { suit1Img };
 
 /**
  * The single source of truth for all products in Divine Collection.
@@ -128,25 +139,6 @@ export const CATALOG_PRODUCTS: Product[] = [
     category: Category.Kurties,
     price: BigInt(885),
   },
-  // ── Night Wear ─────────────────────────────────────────────────────────────
-  {
-    id: BigInt(30),
-    name: "Night Wear 1",
-    description:
-      "A soft and comfortable night wear set in a soothing sage green, perfect for a restful night's sleep.",
-    isFeatured: false,
-    category: Category.NightWear,
-    price: BigInt(850),
-  },
-  {
-    id: BigInt(31),
-    name: "Night Wear 2",
-    description:
-      "A stylish night wear set featuring the full Divine Collection range — relax in comfort and style.",
-    isFeatured: false,
-    category: Category.NightWear,
-    price: BigInt(850),
-  },
 ];
 
 // ── Product Overrides ─────────────────────────────────────────────────────────
@@ -163,10 +155,17 @@ export function useProductOverrides() {
     staleTime: 30_000,
   });
 }
-
-// Image overrides are disabled -- all images are served from bundled assets
 export function useImageOverrides(): Record<string, string> {
-  return {};
+  const { data: overrides } = useProductOverrides();
+  const map: Record<string, string> = {};
+  if (overrides) {
+    for (const o of overrides) {
+      if (o.imageUrl.length > 0 && o.imageUrl[0]) {
+        map[o.productId] = o.imageUrl[0] as string;
+      }
+    }
+  }
+  return map;
 }
 
 /** Returns all products merged with any admin overrides for price and description. */
@@ -284,17 +283,16 @@ export function isSizeOutOfStock(
 
 /**
  * Returns the available sizes for a given category.
- * Night Wear only has M, L, XL (no XXL).
+ * All categories use M, L, XL, XXL.
  */
 export function getSizesForCategory(
-  category: Category,
+  _category: Category,
 ): Array<"M" | "L" | "XL" | "XXL"> {
-  if (category === Category.NightWear) return ["M", "L", "XL"];
   return ["M", "L", "XL", "XXL"];
 }
 
 /**
- * Maps a product to its bundled image (imported as ES module).
+ * Maps a product to its static image path.
  */
 const SUIT_IMAGE_BY_ID: Record<string, string> = {
   "7": suit1Img,
@@ -315,11 +313,6 @@ const COORD_IMAGE_BY_ID: Record<string, string> = {
   "4": coord1Img,
 };
 
-const NIGHTWEAR_IMAGE_BY_ID: Record<string, string> = {
-  "30": nightwear1Img,
-  "31": nightwear2Img,
-};
-
 export function getProductImage(
   product: Product,
   _allProductsInCategory: Product[],
@@ -332,8 +325,6 @@ export function getProductImage(
       return KURTI_IMAGE_BY_ID[key] ?? kurtiHeroImg;
     case Category.CoordSets:
       return COORD_IMAGE_BY_ID[key] ?? coord1Img;
-    case Category.NightWear:
-      return NIGHTWEAR_IMAGE_BY_ID[key] ?? nightwear1Img;
     default:
       return suit1Img;
   }

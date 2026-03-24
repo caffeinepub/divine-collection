@@ -1,4 +1,4 @@
-import { type HttpAgent, isV3ResponseBody } from "@icp-sdk/core/agent";
+import { Actor, type HttpAgent } from "@icp-sdk/core/agent";
 import { IDL } from "@icp-sdk/core/candid";
 
 type Headers = Record<string, string>;
@@ -482,17 +482,26 @@ export class StorageClient {
   }
 
   private async getCertificate(hash: string): Promise<Uint8Array> {
-    const args = IDL.encode([IDL.Text], [hash]);
-    const result = await this.agent.call(this.backendCanisterId, {
-      methodName: "_caffeineStorageCreateCertificate",
-      arg: args,
-    });
-    const respone = result.response.body;
-    if (isV3ResponseBody(respone)) {
-      console.log("Certificate:", respone.certificate);
-      return respone.certificate;
-    }
-    throw new Error("Expected v3 response body");
+    // Use Actor.createActor which automatically handles both v2 and v3 IC responses
+    // (v2 requires async polling; Actor handles this transparently)
+    const certIdlFactory = ({ IDL }: any) =>
+      IDL.Service({
+        _caffeineStorageCreateCertificate: IDL.Func(
+          [IDL.Text],
+          [IDL.Vec(IDL.Nat8)],
+          [],
+        ),
+      });
+
+    const certActor = Actor.createActor(certIdlFactory, {
+      agent: this.agent as any,
+      canisterId: this.backendCanisterId,
+    }) as unknown as {
+      _caffeineStorageCreateCertificate: (hash: string) => Promise<number[]>;
+    };
+
+    const certBytes = await certActor._caffeineStorageCreateCertificate(hash);
+    return new Uint8Array(certBytes);
   }
 
   public async putFile(

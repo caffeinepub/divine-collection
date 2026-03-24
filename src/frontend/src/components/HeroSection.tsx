@@ -15,7 +15,7 @@ export function HeroSection({ onShopNow }: HeroSectionProps) {
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <img
-          src="/assets/generated/hero-banner.dim_1200x500.jpg"
+          src="/assets/generated/divine-hero-banner.dim_1920x900.jpg"
           alt="Divine Collection hero"
           className="w-full h-full object-cover object-center"
           loading="eager"
