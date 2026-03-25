@@ -4,14 +4,9 @@ import { useMemo, useState } from "react";
 import type { DisplayProduct } from "../hooks/useQueries";
 import {
   dynamicToDisplayProduct,
-  toDisplayProduct,
-  useAllProducts,
   useDynamicCategories,
   useDynamicProducts,
-  useImageOverrides,
-  useProductOverrides,
 } from "../hooks/useQueries";
-import { getProductImage } from "../hooks/useQueries";
 import { ProductCard } from "./ProductCard";
 import { ProductQuickView } from "./ProductQuickView";
 
@@ -23,33 +18,12 @@ export function ShopSection() {
     useDynamicCategories();
   const { data: dynamicProducts, isLoading: prodsLoading } =
     useDynamicProducts();
-  const { data: staticProducts } = useAllProducts();
-  const { data: overrides } = useProductOverrides();
-  const imageOverrides = useImageOverrides();
 
   const [quickViewProduct, setQuickViewProduct] =
     useState<DisplayProduct | null>(null);
   const [quickViewImage, setQuickViewImage] = useState<string>("");
 
   const isLoading = catsLoading || prodsLoading;
-
-  // Build override map for static products
-  const overrideMap = useMemo(() => {
-    const map: Record<
-      string,
-      { price?: bigint; description?: string; imageUrl?: string }
-    > = {};
-    if (overrides) {
-      for (const o of overrides) {
-        map[o.productId] = {
-          price: o.price ?? undefined,
-          description: o.description ?? undefined,
-          imageUrl: o.imageUrl ?? undefined,
-        };
-      }
-    }
-    return map;
-  }, [overrides]);
 
   // Build category name map from dynamic categories
   const categoryNameMap = useMemo(() => {
@@ -61,7 +35,7 @@ export function ShopSection() {
   }, [dynamicCategories]);
 
   // Convert dynamic products to DisplayProduct
-  const displayDynamic = useMemo(() => {
+  const allDisplayProducts = useMemo(() => {
     if (!dynamicProducts) return [];
     return dynamicProducts
       .filter((p) => p.isActive)
@@ -73,28 +47,7 @@ export function ShopSection() {
       );
   }, [dynamicProducts, categoryNameMap]);
 
-  // Convert static products to DisplayProduct (only if no dynamic products loaded, for backward compat)
-  const displayStatic = useMemo(() => {
-    if (displayDynamic.length > 0) return []; // hide static if dynamic exist
-    return (staticProducts ?? []).map((p) => {
-      const ov = overrideMap[p.id.toString()];
-      return toDisplayProduct(
-        p,
-        ov?.imageUrl ||
-          imageOverrides[p.id.toString()] ||
-          getProductImage(p, []),
-        ov?.price,
-        ov?.description,
-      );
-    });
-  }, [staticProducts, overrideMap, imageOverrides, displayDynamic.length]);
-
-  const allDisplayProducts = useMemo(
-    () => [...displayDynamic, ...displayStatic],
-    [displayDynamic, displayStatic],
-  );
-
-  // Build tabs: static fallback tabs or dynamic categories
+  // Build tabs from dynamic categories
   const tabs = useMemo(() => {
     const list: { value: string; label: string }[] = [
       { value: ALL_TAB, label: "All Collections" },
@@ -103,18 +56,9 @@ export function ShopSection() {
       for (const cat of dynamicCategories) {
         list.push({ value: cat.id, label: cat.name });
       }
-    } else {
-      // fallback static tabs
-      const seen = new Set<string>();
-      for (const p of allDisplayProducts) {
-        if (!seen.has(p.categoryId)) {
-          seen.add(p.categoryId);
-          list.push({ value: p.categoryId, label: p.categoryName });
-        }
-      }
     }
     return list;
-  }, [dynamicCategories, allDisplayProducts]);
+  }, [dynamicCategories]);
 
   const filteredProducts = useMemo(() => {
     if (activeTab === ALL_TAB) return allDisplayProducts;

@@ -3,62 +3,46 @@ import { motion } from "motion/react";
 import { useMemo, useState } from "react";
 import type { DisplayProduct } from "../hooks/useQueries";
 import {
-  getProductImage,
-  toDisplayProduct,
-  useAllProducts,
-  useFeaturedProducts,
-  useImageOverrides,
-  useProductOverrides,
+  dynamicToDisplayProduct,
+  useDynamicCategories,
+  useDynamicProducts,
 } from "../hooks/useQueries";
 import { ProductCard } from "./ProductCard";
 import { ProductQuickView } from "./ProductQuickView";
 
 export function FeaturedSection() {
-  const { data: featured, isLoading } = useFeaturedProducts();
-  const { data: allProducts } = useAllProducts();
-  const imageOverrides = useImageOverrides();
-  const { data: overrides } = useProductOverrides();
+  const { data: dynamicCategories, isLoading: catsLoading } =
+    useDynamicCategories();
+  const { data: dynamicProducts, isLoading: prodsLoading } =
+    useDynamicProducts();
 
   const [quickViewProduct, setQuickViewProduct] =
     useState<DisplayProduct | null>(null);
   const [quickViewImage, setQuickViewImage] = useState<string>("");
 
-  const overrideMap = useMemo(() => {
-    const map: Record<
-      string,
-      { price?: bigint; description?: string; imageUrl?: string }
-    > = {};
-    if (overrides) {
-      for (const o of overrides) {
-        map[o.productId] = {
-          price: o.price ?? undefined,
-          description: o.description ?? undefined,
-          imageUrl: o.imageUrl ?? undefined,
-        };
-      }
+  const isLoading = catsLoading || prodsLoading;
+
+  const categoryNameMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const cat of dynamicCategories ?? []) {
+      map[cat.id] = cat.name;
     }
     return map;
-  }, [overrides]);
+  }, [dynamicCategories]);
 
+  // Show first 3 active dynamic products as featured
   const displayProducts = useMemo(() => {
-    return (featured ?? []).map((product) => {
-      const ov = overrideMap[product.id.toString()];
-      const fallbackImage =
-        imageOverrides[product.id.toString()] ??
-        (() => {
-          const catProds = (allProducts ?? []).filter(
-            (p) => p.category === product.category,
-          );
-          return getProductImage(product, catProds);
-        })();
-      return toDisplayProduct(
-        product,
-        ov?.imageUrl || fallbackImage,
-        ov?.price,
-        ov?.description,
+    if (!dynamicProducts) return [];
+    return dynamicProducts
+      .filter((p) => p.isActive)
+      .slice(0, 3)
+      .map((p) =>
+        dynamicToDisplayProduct(
+          p,
+          categoryNameMap[p.categoryId] ?? p.categoryId,
+        ),
       );
-    });
-  }, [featured, overrideMap, imageOverrides, allProducts]);
+  }, [dynamicProducts, categoryNameMap]);
 
   const handleQuickView = (product: DisplayProduct, image: string) => {
     setQuickViewProduct(product);
@@ -107,6 +91,18 @@ export function FeaturedSection() {
                 <Skeleton className="h-4 w-1/3" />
               </div>
             ))}
+          </div>
+        ) : displayProducts.length === 0 ? (
+          <div
+            data-ocid="featured.empty_state"
+            className="text-center py-16 text-muted-foreground"
+          >
+            <p className="font-display text-2xl font-semibold text-foreground mb-2">
+              New arrivals coming soon
+            </p>
+            <p className="text-sm">
+              Our latest collection is being curated just for you.
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
