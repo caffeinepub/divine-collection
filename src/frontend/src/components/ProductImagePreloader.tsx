@@ -59,9 +59,14 @@ export function ProductImagePreloader() {
         src="/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.45-PM-1--1.jpeg"
         alt=""
       />
-      {/* Hero / collection banners */}
+      {/* Our Story / About section image */}
       <img
         src="/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.46-PM-1.jpeg"
+        alt=""
+      />
+      {/* Contact Us section image */}
+      <img
+        src="/assets/uploads/WhatsApp-Image-2026-03-08-at-7.40.45-PM-1--1.jpeg"
         alt=""
       />
       {/* Size chart */}
@@ -69,9 +74,18 @@ export function ProductImagePreloader() {
         src="/assets/uploads/WhatsApp-Image-2026-03-09-at-10.34.16-PM-1.jpeg"
         alt=""
       />
-      {/* Brand logo */}
+      {/* Night Wear */}
+      <img
+        src="/assets/uploads/WhatsApp-Image-2026-03-22-at-4.47.00-PM-1.jpeg"
+        alt=""
+      />
+      <img
+        src="/assets/uploads/WhatsApp-Image-2026-03-22-at-7.50.49-PM-2.jpeg"
+        alt=""
+      />
+      {/* Brand logo -- must appear here to prevent build pruning */}
       <img src="/assets/generated/brand-logo.dim_400x160.png" alt="" />
-      {/* Hero banner - must be listed here to prevent build pruning */}
+      {/* Hero banner -- must appear here to prevent build pruning */}
       <img src="/assets/generated/divine-hero-banner.dim_1920x900.jpg" alt="" />
     </div>
   );
